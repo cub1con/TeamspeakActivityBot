@@ -24,6 +24,15 @@ namespace TeamspeakActivityBot
 
         static void Main(string[] args)
         {
+#if DEBUG
+            while (!System.Diagnostics.Debugger.IsAttached)
+            {
+                Console.WriteLine("Waiting for Debugger...");
+                System.Threading.Thread.Sleep(1000);
+            }
+            Console.WriteLine("Debugger attached!");
+#endif
+
             ClientManager = new ClientManager(CLIENTS_FILE);
             ConfigManager = new ConfigManager(CONFIG_FILE);
 
@@ -137,11 +146,18 @@ namespace TeamspeakActivityBot
         private static async Task CollectOnlineTime(TeamSpeakClient bot, DateTime lastRun)
         {
             Console.WriteLine("[>] Collecting online time");
-            var clients = (await bot.GetClients()).Where(c => c.Type == ClientType.FullClient);
+            var clients = await bot.GetClients();
+            
             var clientInfos = new List<GetClientDetailedInfo>();
-            foreach (var cl in clients) clientInfos.Add(await bot.GetClientInfo(cl.Id));
-            var trackedClients = clientInfos.Where(c => c.ServerGroupIds.Any(id => ConfigManager.Config.UserGroups.Contains(id)));
+            foreach (var cl in clients.Where(c => c.Type == ClientType.FullClient)) 
+                clientInfos.Add(await bot.GetClientInfo(cl.Id));
+           
+            var trackedClients = new List<GetClientDetailedInfo>();
+            foreach (var cl in clientInfos.Where(c => c.ServerGroupIds.Any(id => ConfigManager.Config.UserGroups.Contains(id)))) 
+                trackedClients.Add(cl);
+            
             bool anyChange = false;
+            
             foreach (var ci in trackedClients) anyChange |= UpdateClientTime(lastRun, ci);
             if (anyChange)
                 ClientManager.Save();
