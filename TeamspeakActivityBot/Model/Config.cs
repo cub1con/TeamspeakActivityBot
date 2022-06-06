@@ -19,6 +19,7 @@ namespace TeamspeakActivityBot.Model
         public int ChannelId { get; set; }
         public DateTime LoggingSince { get; set; }
         public bool LogOutputMuted { get; set; }
+        public string SentryDsn { get; set; }
 
         public Config()
         {

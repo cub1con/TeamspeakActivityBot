@@ -1,13 +1,10 @@
 ﻿using TeamspeakActivityBot.Model;
 using TeamspeakActivityBot.Utils;
-using System;
-using System.Collections.Generic;
 using System.IO;
-using System.Text;
 
-namespace TeamspeakActivityBot
+namespace TeamspeakActivityBot.Manager
 {
-    class ConfigManager
+    public class ConfigManager
     {
         public Config Config => configFile.Data;
         private JsonFile<Config> configFile;

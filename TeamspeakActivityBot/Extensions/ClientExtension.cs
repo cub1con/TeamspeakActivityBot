@@ -1,6 +1,6 @@
 ﻿using TeamSpeak3QueryApi.Net.Specialized.Responses;
 
-namespace TeamspeakActivityBot
+namespace TeamspeakActivityBot.Extensions
 {
     public static class ClientExtension
     {

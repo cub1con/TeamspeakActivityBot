@@ -1,69 +1,86 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using Newtonsoft.Json;
 using System.IO;
-using System.Text;
 
 namespace TeamspeakActivityBot.Utils
 {
-    class JsonFile<T> where T : new()
+    public class JsonFile<T> where T : new()
     {
-        public FileInfo File { get; private set; }
+        private FileInfo _jsonFile { get; set; }
+
+        private object _fileLock = new();
+
+        private T _data;
+
+        private bool _fileRead;
+        private bool _fileSaved;
+
+        public JsonFile(FileInfo file)
+        {
+            _jsonFile = file;
+            _fileRead = false;
+            Read();
+        }
+
         public T Data
         {
             get
             {
-                if (!dataRead)
+                if (!_fileRead)
                     Read();
-                 
-                return data;
+
+                return _data;
             }
             set
             {
-                data = value;
-                if (AutoSave)
-                    Save();
-            }
-        }
-
-        private T data;
-        private bool dataRead;
-        private object fileLock = new object();
-
-        protected bool LazyRead { get; set; }
-        public bool AutoSave { get; private set; }
-
-        public JsonFile(FileInfo file, bool lazyRead = false, bool autoSave = true)
-        {
-            File = file;
-            dataRead = false;
-            if (!lazyRead)
-                Read();
-        }
-
-        public void Read(bool forceRead = false)
-        {
-            if (!forceRead && dataRead)
-                return;
-
-            if (!File.Exists)
-            {
-                data = new T();
+                _data = value;
                 Save();
-                return;
+            }
+        }
+
+        public void Save()
+        {
+            lock (_fileLock)
+            {
+                using (var fStream = this._jsonFile.Open(FileMode.OpenOrCreate, FileAccess.Write))
+                {
+                    using (var writer = new StreamWriter(fStream))
+                    {
+                        writer.Write(JsonConvert.SerializeObject(_data));
+                    }
+                }
             }
 
-            lock (fileLock)
-            {
-                data = JsonConvertEx.ReadFile<T>(File);
-            }
-            dataRead = true;
+            _fileSaved = true;
         }
-        public void Save() 
+
+        public void Read()
         {
-            lock (fileLock)
+            if (!File.Exists(this._jsonFile.FullName))
             {
-                JsonConvertEx.WriteFile(File, data);
+                _data = new T();
+                Save();
+            }
+
+
+            lock (_fileLock)
+            {
+                using (var fStream = this._jsonFile.OpenRead())
+                {
+                    using (var reader = new StreamReader(fStream))
+                    {
+                        _data = JsonConvert.DeserializeObject<T>(reader.ReadToEnd());
+                    }
+                }
+            }
+
+            _fileRead = true;
+
+            if (!_fileSaved)
+            {
+                Save();
             }
         }
     }
+
+
 }
