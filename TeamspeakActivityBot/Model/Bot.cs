@@ -134,7 +134,7 @@ namespace TeamspeakActivityBot.Model
                 clientManager.Clients.Save();
         }
 
-        private  bool UpdateClientTime(DateTime lastRun, GetClientDetailedInfo clientInfo)
+        private bool UpdateClientTime(DateTime lastRun, GetClientDetailedInfo clientInfo)
         {
             var client = clientManager[clientInfo.DatabaseId.ToString()];
             if (client == null)

@@ -1,9 +1,8 @@
-﻿using Newtonsoft.Json;
-using TeamspeakActivityBot.Model;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using TeamspeakActivityBot.Model;
 using TeamspeakActivityBot.Utils;
 
 namespace TeamspeakActivityBot.Manager

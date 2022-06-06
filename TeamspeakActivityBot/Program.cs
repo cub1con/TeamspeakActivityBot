@@ -1,16 +1,9 @@
-﻿using TeamspeakActivityBot.Model;
+﻿using Sentry;
 using System;
-using System.Collections.Generic;
 using System.IO;
-using System.Linq;
-using System.Text;
-using System.Threading;
-using System.Threading.Tasks;
 using TeamSpeak3QueryApi.Net;
-using TeamSpeak3QueryApi.Net.Specialized;
-using TeamSpeak3QueryApi.Net.Specialized.Responses;
-using Sentry;
 using TeamspeakActivityBot.Manager;
+using TeamspeakActivityBot.Model;
 
 namespace TeamspeakActivityBot
 {

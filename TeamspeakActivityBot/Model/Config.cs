@@ -1,6 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace TeamspeakActivityBot.Model
 {
@@ -35,7 +33,7 @@ namespace TeamspeakActivityBot.Model
             ChannelId = -1;
             LogAFK = false;
             LogOutputMuted = false;
-            UserGroups = new int[] { 6, 7, 9};
+            UserGroups = new int[] { 6, 7, 9 };
         }
     }
 }
