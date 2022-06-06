@@ -13,6 +13,8 @@ namespace TeamspeakActivityBot.Model
         public TimeSpan MaxIdleTime { get; set; }
         public bool LogAFK { get; set; }
         public int[] UserGroups { get; set; }
+        public int[] IgnoreChannels {get; set;}
+        public int IgnoreUserGroup { get; set; }
         public string ChannelNameFormat { get; set; }
         public int ChannelId { get; set; }
         public DateTime LoggingSince { get; set; }
@@ -33,7 +35,9 @@ namespace TeamspeakActivityBot.Model
             ChannelId = -1;
             LogAFK = false;
             LogOutputMuted = false;
-            UserGroups = new int[] { 6, 7, 9 };
+            UserGroups = new int[] { 9, 10, 12 };
+            IgnoreUserGroup = 13;
+            IgnoreChannels = new int[] { 19, 18, 17, 16, 15, 14};
         }
     }
 }

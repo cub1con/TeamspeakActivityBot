@@ -70,13 +70,13 @@ namespace TeamspeakActivityBot.Model
 
             var channelInfo = await bot.GetChannelInfo(configManager.Config.ChannelId);
 
+            // Set the channel description
             var description = FormatChannelDescription(topUsers);
             await bot.EditChannel(configManager.Config.ChannelId, ChannelEdit.channel_description, description);
 
+            // Update channel name with mvp
             if (channelInfo.Name != channelName)
                 await bot.EditChannel(configManager.Config.ChannelId, ChannelEdit.channel_name, channelName);
-
-
         }
 
         private string FormatChannelDescription(Client[] topUsers)
@@ -124,8 +124,12 @@ namespace TeamspeakActivityBot.Model
                 clientInfos.Add(await bot.GetClientInfo(cl.Id));
 
             var trackedClients = new List<GetClientDetailedInfo>();
-            foreach (var cl in clientInfos.Where(c => c.ServerGroupIds.Any(id => configManager.Config.UserGroups.Contains(id))))
-                trackedClients.Add(cl);
+            foreach (var cl in clientInfos
+                .Where(c => !c.ServerGroupIds.Contains(this.configManager.Config.IgnoreUserGroup) && // Ignore User if in specified group
+                !configManager.Config.IgnoreChannels.Contains(c.ChannelId) &&                        // Ignore User if in specified channels
+                c.ServerGroupIds.Any(id => configManager.Config.UserGroups
+                .Contains(id))))trackedClients
+                .Add(cl);
 
             bool anyChange = false;
 
@@ -147,10 +151,16 @@ namespace TeamspeakActivityBot.Model
                 });
             }
 
-            var conditionAway = (!clientInfo.Away && !configManager.Config.LogAFK);
-            var conditionMuted = (!clientInfo.IsOutputMuted() && !configManager.Config.LogOutputMuted);
+            // Ignore user if is afk
+            var conditionNotAway = !clientInfo.Away && !configManager.Config.LogAFK;
 
-            if ((conditionAway && conditionMuted) && clientInfo.IdleTime < configManager.Config.MaxIdleTime)
+            // Ignore user if is muted
+            var conditionNotMuted = !clientInfo.IsInputOrOutputMuted() && !configManager.Config.LogOutputMuted;
+
+            // Ignore user if idle is longer than threshold
+            var conditionIdleTIme = clientInfo.IdleTime < configManager.Config.MaxIdleTime;
+
+            if (conditionNotAway && conditionNotMuted && conditionIdleTIme)
             {
                 client.ActiveTime += (DateTime.Now - lastRun);
                 return true;
