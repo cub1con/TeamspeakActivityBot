@@ -18,9 +18,8 @@ namespace TeamspeakActivityBot.Manager
 
         public Client this[int clientId] => HasClient(clientId) ? this.Clients.Data.First(x => x.ClientId == clientId) : null;
 
-        //public Client this[string clientId] => HasClient(clientId) ? clientFile.Data[clientId] : null;
-
         public bool HasClient(int clientId) { return this.Clients.Data.Select(x => x.ClientId).Contains(clientId); }
+
         public Client AddClient(Client client)
         {
             if (!HasClient(client.ClientId))

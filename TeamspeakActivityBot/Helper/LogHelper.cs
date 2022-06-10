@@ -17,7 +17,6 @@ namespace TeamspeakActivityBot.Helper
         public static void LogError(string message)
         {
             Console.WriteLine($"[X] {message}");
-
         }
     }
 }
