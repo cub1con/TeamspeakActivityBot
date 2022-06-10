@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using TeamSpeak3QueryApi.Net.Specialized;
+using TeamSpeak3QueryApi.Net.Specialized.Notifications;
 using TeamSpeak3QueryApi.Net.Specialized.Responses;
 using TeamspeakActivityBot.Extensions;
 using TeamspeakActivityBot.Helper;
@@ -31,20 +32,149 @@ namespace TeamspeakActivityBot
         {
             // Get all connected clients
             var bot = await GetConnectedClient();
+            var botInfo = await bot.WhoAmI();
+
             var lastUserStatsUpdate = DateTime.Now;
             var lastChannelUpdate = DateTime.MinValue;
+
+
+            // register server wide text notifications
+            await bot.RegisterTextServerNotification();
+
+
+            bot.Subscribe<TextMessage>(async data =>
+            {
+                foreach (var msg in data)
+                {
+                    // Prevent reacting to own messages
+                    if (msg.InvokerId == botInfo.OriginServerId || !msg.Message.StartsWith('!'))
+                    {
+                        break;
+                    }
+
+                    var command = string.Empty;
+                    var argument = string.Empty;
+
+                    // returns -1 if there is no whitespace
+                    var whiteSpaceIndex = msg.Message.IndexOf(' ');
+
+                    if (whiteSpaceIndex == -1)
+                    {
+                        command = msg.Message.ToLower();
+                    }
+                    else
+                    {
+                        // Cut the string, first substing will be command, second will be the argument
+                        command = msg.Message.Substring(0, whiteSpaceIndex).ToLower();
+                        argument = msg.Message.Substring(whiteSpaceIndex, msg.Message.Length - whiteSpaceIndex).Trim().ToLower();
+                    }
+
+
+                    LogHelper.LogUpdate($"Starting {command} - {msg.InvokerName}");
+
+                    // Interpret commands
+                    var message = string.Empty;
+                    switch (command)
+                    {
+                        case "!roll":
+                            int maxRoll = 6;
+
+                            // Check for argument, should be a number
+                            if (argument != string.Empty)
+                            {
+                                // TryParse the argument, if not valid, throw error
+                                var parsed = int.TryParse(argument, out maxRoll);
+                                if (!parsed || maxRoll < 1) // Throw divided by zero exception
+                                {
+                                    if (maxRoll == 0)
+                                    {
+                                        message = new DivideByZeroException().ToString();
+                                        break;
+                                    }
+
+                                    message = "No valid input!";
+                                    break;
+                                }
+                            }
+                            // Roll a rundom number and report back to user
+                            var random = new Random().Next(1, maxRoll);
+                            message = $"You rolled a {random}";
+                            break;
+
+                        case "!kick":
+                            var userName = string.Empty;
+                            var userId = -1;
+
+                            // Check for argument
+                            if (argument != string.Empty)
+                            {
+                                var users = await bot.GetClients();
+                                var filterdUsers = users.Where(x => x.Type == ClientType.FullClient).ToArray();
+                                GetClientInfo user;
+
+                                // random picks a random user and kicks him
+                                if (argument == "random" || argument == "r")
+                                {
+                                    var rnd = new Random().Next(1, filterdUsers.Length);
+                                    user = filterdUsers[rnd - 1];
+                                }
+                                else
+                                {
+                                    // Search for user to kick, report if not found
+                                    user = filterdUsers.SingleOrDefault(x => x.NickName.ToLower().StartsWith(argument));
+                                    if (user == null)
+                                    {
+                                        message = "User not found";
+                                        break;
+                                    }
+                                }
+
+                                userName = user.NickName;
+                                userId = user.Id;
+                            }
+                            else
+                            {
+                                userName = msg.InvokerName;
+                                userId = msg.InvokerId;
+                            }
+
+                            // Kick the user
+                            await bot.KickClient(userId, KickOrigin.Server, "Trololololololooololooooo.com");
+                            message = $"Kicked {userName} from the server";
+                            break;
+
+                        case "!memes":
+                        case "!meme":
+                            // Get some funky fresh memes
+                            var tmp = new Random().Next(0, Misc.Memes.Captions.Length - 1);
+                            message = Misc.Memes.Captions[tmp];
+                            break;
+                        case "!help":
+                            message = "Available Commands:\n!roll [Optional number]\n!kick ['random', Optional Username, yourself if no argument is provided]\n!meme(s) - Get some funky fresh memes!\n!help - You know.";
+                            break;
+
+                        default:
+                            message = $"Command not found!";
+                            break;
+                    }
+
+                    LogHelper.LogUpdate($"Finished {command} - {msg.InvokerName} -> {message}");
+                    await bot.SendGlobalMessage($"@{msg.InvokerName} - {message}");
+                }
+            });
+
             while (!Console.KeyAvailable)
             {
-                if (DateTime.Now - lastUserStatsUpdate >= configManager.Config.TimeLogInterval)
-                {
-                    await CollectOnlineTime(bot, lastUserStatsUpdate);
-                    lastUserStatsUpdate = DateTime.Now;
-                }
-                if (DateTime.Now - lastChannelUpdate >= configManager.Config.ChannelUpdateInterval)
-                {
-                    await SetTopList(bot);
-                    lastChannelUpdate = DateTime.Now;
-                }
+                //if (DateTime.Now - lastUserStatsUpdate >= configManager.Config.TimeLogInterval)
+                //{
+                //    await CollectOnlineTime(bot, lastUserStatsUpdate);
+                //    lastUserStatsUpdate = DateTime.Now;
+                //}
+                //if (DateTime.Now - lastChannelUpdate >= configManager.Config.ChannelUpdateInterval)
+                //{
+                //    await SetTopList(bot);
+                //    lastChannelUpdate = DateTime.Now;
+                //}
                 await Task.Delay(TimeSpan.FromSeconds(1));
             }
         }
