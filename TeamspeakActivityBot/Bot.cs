@@ -6,13 +6,15 @@ using System.Threading.Tasks;
 using TeamSpeak3QueryApi.Net.Specialized;
 using TeamSpeak3QueryApi.Net.Specialized.Responses;
 using TeamspeakActivityBot.Extensions;
+using TeamspeakActivityBot.Helper;
 using TeamspeakActivityBot.Manager;
+using TeamspeakActivityBot.Model;
 
-namespace TeamspeakActivityBot.Model
+namespace TeamspeakActivityBot
 {
     public class Bot
     {
-        private static TimeSpan WW2DURATION = (new DateTime(1945, 9, 2) - new DateTime(1939, 9, 1));
+        private static readonly TimeSpan WW2DURATION = (new DateTime(1945, 9, 2) - new DateTime(1939, 9, 1));
         private const int MAX_CHANNEL_NAME_LENGTH = 40;
 
         private ClientManager clientManager;
@@ -52,7 +54,17 @@ namespace TeamspeakActivityBot.Model
             var bot = new TeamSpeakClient(configManager.Config.Host, configManager.Config.Port);
             await bot.Connect();
             await bot.Login(configManager.Config.QueryUsername, configManager.Config.QueryPassword);
-            await bot.UseServer((await bot.GetServers()).FirstOrDefault().Id);
+
+            if(configManager.Config.InstanceId == 0)
+            {
+                LogHelper.LogWarning("No Instance configured, fallback to query.");
+                await bot.UseServer((await bot.GetServers()).FirstOrDefault().Id);
+            }
+            else
+            {
+                await bot.UseServer(configManager.Config.InstanceId);
+            }
+
             return bot;
         }
 
@@ -60,63 +72,87 @@ namespace TeamspeakActivityBot.Model
         {
             if (!clientManager.Clients.Data.Any())
             {
-                Console.WriteLine("[!] Couldn't update channel info: no users! ==========");
+                LogHelper.LogWarning("Couldn't update channel info: no users!");
                 return;
             }
 
-            Console.WriteLine("[>] Updating channel info");
-            var topUsers = clientManager.Clients.Data.OrderByDescending(x => x.ActiveTime).ToArray();
-            var channelName = FormatChannelName(topUsers.FirstOrDefault()); ;
+            LogHelper.LogUpdate("Updating channel info");
 
-            var channelInfo = await bot.GetChannelInfo(configManager.Config.ChannelId);
+            var clients = clientManager.Clients.Data.ToArray();
+            var channelName = FormatChannelName(clients.OrderByDescending(x => x.ActiveTime).FirstOrDefault());
 
             // Set the channel description
-            var description = FormatChannelDescription(topUsers);
-            await bot.EditChannel(configManager.Config.ChannelId, ChannelEdit.channel_description, description);
+            var description = FormatChannelDescription(clients);
+            await bot.EditChannel(configManager.Config.TopListChannelId, ChannelEdit.channel_description, description);
 
             // Update channel name with mvp
+            var channelInfo = await bot.GetChannelInfo(configManager.Config.TopListChannelId);
             if (channelInfo.Name != channelName)
-                await bot.EditChannel(configManager.Config.ChannelId, ChannelEdit.channel_name, channelName);
+                await bot.EditChannel(configManager.Config.TopListChannelId, ChannelEdit.channel_name, channelName);
         }
 
-        private string FormatChannelDescription(Client[] topUsers)
+        private string FormatChannelDescription(Client[] clients)
         {
-            var totalTime = TimeSpan.FromTicks(topUsers.Sum(x => x.ActiveTime.Ticks));
             var description = new StringBuilder();
-            description.AppendLine($"Seit {configManager.Config.LoggingSince}:");
+
+            // Format for TopUsers
+            var topUsers = clients.OrderByDescending(x => x.ActiveTime).Where(x => x.ActiveTime != new TimeSpan()).ToArray();
+
+            var totalTimeTop = TimeSpan.FromTicks(topUsers.Sum(x => x.ActiveTime.Ticks));
+            description.AppendLine($"Seit {configManager.Config.LoggingSince} aktiv:");
             description.AppendLine(string.Join(Environment.NewLine, topUsers.Select(c => c.ToString()).ToArray()));
             description.AppendLine("Fun facts:");
             description.AppendLine(string.Format(
                 "-> Insgesamt verschwendete Zeit: {0}",
-                totalTime.ToString(@"ddd\T\ hh\:mm\:ss")));
+                totalTimeTop.ToString(@"ddd\T\ hh\:mm\:ss")));
             description.AppendLine(string.Format(
                 "-> Damit hätten wir {0} mal den 2. Weltkrieg führen können!",
-                ((double)totalTime.Ticks / (double)WW2DURATION.Ticks).ToString("0.000")));
-            description.Append(string.Format(
+                ((double)totalTimeTop.Ticks / (double)WW2DURATION.Ticks).ToString("0.000")));
+            description.AppendLine(string.Format(
                 "-> Durchschnittlich verschwendete Zeit: {0}",
-                TimeSpan.FromTicks(totalTime.Ticks / topUsers.Length).ToString(@"ddd\T\ hh\:mm\:ss")));
+                TimeSpan.FromTicks(totalTimeTop.Ticks / topUsers.Length).ToString(@"ddd\T\ hh\:mm\:ss")));
+
+            description.AppendLine(Environment.NewLine);
+
+            // Format for all users TODO: Make this optional?
+            var completeUsers = clients.OrderByDescending(x => x.ConnectedTime).Where(x => x.ConnectedTime != new TimeSpan()).ToArray();
+
+            var totalTimeAll = TimeSpan.FromTicks(topUsers.Sum(x => x.ConnectedTime.Ticks));
+            description.AppendLine($"Seit {configManager.Config.LoggingSince} verbunden:");
+            description.AppendLine(string.Join(Environment.NewLine, completeUsers.Select(c => c.ToConnectedTimeString()).ToArray()));
+            description.AppendLine("Fun facts:");
+            description.AppendLine(string.Format(
+                "-> Insgesamt verbundene Zeit: {0}",
+                totalTimeAll.ToString(@"ddd\T\ hh\:mm\:ss")));
+            description.AppendLine(string.Format(
+                "-> Damit hätten wir {0} mal den 2. Weltkrieg führen können!",
+                ((double)totalTimeAll.Ticks / (double)WW2DURATION.Ticks).ToString("0.000")));
+            description.Append(string.Format(
+                "-> Durchschnittlich verbundene Zeit: {0}",
+                TimeSpan.FromTicks(totalTimeAll.Ticks / completeUsers.Length).ToString(@"ddd\T\ hh\:mm\:ss")));
+
             return description.ToString();
         }
 
         private string FormatChannelName(Client topUser)
         {
-            var channelName = configManager.Config.ChannelNameFormat.Replace("%NAME%", topUser.DisplayName);
+            var channelName = configManager.Config.TopListChannelNameFormat.Replace("%NAME%", topUser.DisplayName);
             if (channelName.Length > MAX_CHANNEL_NAME_LENGTH)
             {
-                var maxNameLength = configManager.Config.ChannelNameFormat.Length - "%NAME%".Length;
+                var maxNameLength = configManager.Config.TopListChannelNameFormat.Length - "%NAME%".Length;
                 var userName = topUser.DisplayName;
-                if (userName.Contains("|") && userName.IndexOf('|') <= maxNameLength)
+                if (userName.Contains('|') && userName.IndexOf('|') <= maxNameLength)
                     userName = userName.Substring(0, userName.IndexOf('|')).Trim();
                 else
                     userName = userName.Substring(0, maxNameLength).Trim();
-                channelName = configManager.Config.ChannelNameFormat.Replace("%NAME%", userName);
+                channelName = configManager.Config.TopListChannelNameFormat.Replace("%NAME%", userName);
             }
             return channelName;
         }
 
         private async Task CollectOnlineTime(TeamSpeakClient bot, DateTime lastRun)
         {
-            Console.WriteLine("[>] Collecting online time");
+            LogHelper.LogUpdate("Collecting online time");
             var clients = await bot.GetClients();
 
             var clientInfos = new List<GetClientDetailedInfo>();
@@ -140,17 +176,27 @@ namespace TeamspeakActivityBot.Model
 
         private bool UpdateClientTime(DateTime lastRun, GetClientDetailedInfo clientInfo)
         {
-            var client = clientManager[clientInfo.DatabaseId.ToString()];
+            // Will always get set to true, whil TrackTotalTime is mandatory
+            bool update = false;
+            var calculatedTime = (DateTime.Now - lastRun);
+
+            var client = clientManager[clientInfo.DatabaseId];
             if (client == null)
             {
                 client = clientManager.AddClient(new Client()
                 {
-                    ClientId = clientInfo.DatabaseId.ToString(),
+                    ClientId = clientInfo.DatabaseId,
                     DisplayName = clientInfo.NickName,
-                    ActiveTime = TimeSpan.Zero
+                    ActiveTime = TimeSpan.Zero,
+                    ConnectedTime = TimeSpan.Zero
                 });
             }
 
+            // Track total time
+            client.ConnectedTime += calculatedTime;
+            update = true;
+
+            // Track active Time
             // Ignore user if is afk
             var conditionNotAway = !clientInfo.Away && !configManager.Config.LogAFK;
 
@@ -162,11 +208,11 @@ namespace TeamspeakActivityBot.Model
 
             if (conditionNotAway && conditionNotMuted && conditionIdleTIme)
             {
-                client.ActiveTime += (DateTime.Now - lastRun);
-                return true;
+                client.ActiveTime += calculatedTime;
+                update = true;
             }
 
-            return false;
+            return update;
         }
     }
 }

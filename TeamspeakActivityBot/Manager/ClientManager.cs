@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using TeamspeakActivityBot.Model;
-using TeamspeakActivityBot.Utils;
+using TeamspeakActivityBot.Helper;
 
 namespace TeamspeakActivityBot.Manager
 {
@@ -16,24 +16,18 @@ namespace TeamspeakActivityBot.Manager
             this.Clients = new JsonFile<List<Client>>(file);
         }
 
-        public Client this[string clientId] => HasClient(clientId) ? this.Clients.Data.First(x => x.ClientId == clientId) : null;
+        public Client this[int clientId] => HasClient(clientId) ? this.Clients.Data.First(x => x.ClientId == clientId) : null;
 
         //public Client this[string clientId] => HasClient(clientId) ? clientFile.Data[clientId] : null;
 
-        public bool HasClient(string clientId) { return this.Clients.Data.Select(x => x.ClientId).Contains(clientId); }
+        public bool HasClient(int clientId) { return this.Clients.Data.Select(x => x.ClientId).Contains(clientId); }
         public Client AddClient(Client client)
         {
-
-            switch (HasClient(client.ClientId))
+            if (!HasClient(client.ClientId))
             {
-                case true:
-                    this.Clients.Data.First(x => x.ClientId.Equals(client.ClientId));
-                    break;
-                case false:
-                    this.Clients.Data.Add(client);
-                    break;
+                this.Clients.Data.Add(client);
+                this.Clients.Save();
             }
-            this.Clients.Save();
             return client;
         }
 

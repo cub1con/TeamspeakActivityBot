@@ -1,13 +1,13 @@
 ﻿using Newtonsoft.Json;
 using System.IO;
 
-namespace TeamspeakActivityBot.Utils
+namespace TeamspeakActivityBot.Helper
 {
     public class JsonFile<T> where T : new()
     {
-        private FileInfo _jsonFile { get; set; }
+        private FileInfo jsonFile { get; set; }
 
-        private object _fileLock = new();
+        private object fileLock = new();
 
         private T _data;
 
@@ -16,8 +16,9 @@ namespace TeamspeakActivityBot.Utils
 
         public JsonFile(FileInfo file)
         {
-            _jsonFile = file;
+            jsonFile = file;
             _fileRead = false;
+            _fileSaved = false;
             Read();
         }
 
@@ -39,9 +40,9 @@ namespace TeamspeakActivityBot.Utils
 
         public void Save()
         {
-            lock (_fileLock)
+            lock (fileLock)
             {
-                using (var fStream = this._jsonFile.Open(FileMode.OpenOrCreate, FileAccess.Write))
+                using (var fStream = this.jsonFile.Open(FileMode.OpenOrCreate, FileAccess.Write))
                 {
                     using (var writer = new StreamWriter(fStream))
                     {
@@ -55,16 +56,16 @@ namespace TeamspeakActivityBot.Utils
 
         public void Read()
         {
-            if (!File.Exists(this._jsonFile.FullName))
+            if (!File.Exists(this.jsonFile.FullName))
             {
                 _data = new T();
                 Save();
             }
 
 
-            lock (_fileLock)
+            lock (fileLock)
             {
-                using (var fStream = this._jsonFile.OpenRead())
+                using (var fStream = this.jsonFile.OpenRead())
                 {
                     using (var reader = new StreamReader(fStream))
                     {

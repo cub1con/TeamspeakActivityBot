@@ -2,8 +2,8 @@
 using System;
 using System.IO;
 using TeamSpeak3QueryApi.Net;
+using TeamspeakActivityBot.Helper;
 using TeamspeakActivityBot.Manager;
-using TeamspeakActivityBot.Model;
 
 namespace TeamspeakActivityBot
 {
@@ -15,7 +15,7 @@ namespace TeamspeakActivityBot
         private static ClientManager ClientManager;
         private static ConfigManager ConfigManager;
 
-        static void Main(string[] args)
+        static int Main(string[] args)
         {
             AppDomain currentDomain = AppDomain.CurrentDomain;
             currentDomain.UnhandledException += new UnhandledExceptionEventHandler(DomainUnhandledExceptionHandler);
@@ -29,28 +29,64 @@ namespace TeamspeakActivityBot
             Console.WriteLine("Debugger attached!");
 #endif
 
-            ClientManager = new ClientManager(CLIENTS_FILE);
+            // Load Config
             ConfigManager = new ConfigManager(CONFIG_FILE);
+
+            // Initialise Sentry, then do the rest
             using (SentrySdk.Init(o =>
             {
-                o.Dsn = ConfigManager.Config.SentryDsn;
-                // When configuring for the first time, to see what the SDK is doing:
-                o.Debug = true;
-                o.ShutdownTimeout = TimeSpan.FromSeconds(5);
+                if (ConfigManager.Config.SentryDsn == "")
+                {
+                    o.Dsn = ConfigManager.Config.SentryDsn;
+                }
+
                 // Set traces_sample_rate to 1.0 to capture 100% of transactions for performance monitoring.
                 // We recommend adjusting this value in production.
+                o.TracesSampleRate = 1.0;
+                o.ShutdownTimeout = TimeSpan.FromSeconds(5);
 #if DEBUG
                 o.Environment = "dev";
+                o.Debug = true;
 #else
                 o.Environment = "prod";
-
-                o.TracesSampleRate = 1.0;
 #endif
             }))
             {
+
+                // Check for needed options
+                bool error = false;
+                if (ConfigManager.Config.QueryUsername == "")
+                {
+                    LogHelper.LogError("No QueryUsername set!");
+                    error = true;
+                }
+
+                if (ConfigManager.Config.QueryPassword == "")
+                {
+                    LogHelper.LogError("No QueryPassword set!");
+                    error = true;
+                }
+
+                if (ConfigManager.Config.TopListChannelId == -1)
+                {
+                    LogHelper.LogError("No Id set for TopListChannel set!");
+                    error = true;
+                }
+
+                if (!ConfigManager.Config.TopListChannelNameFormat.Contains("%NAME%"))
+                {
+                    LogHelper.LogError("No Wildcard '%NAME%' in 'TopListChannelNameFormat found!");
+                    error = true;
+                }
+
+                if (error)
+                    return 1; // Exit the Application
+
+
                 try
                 {
-                    Console.WriteLine("[Press any key to exit]");
+                    LogHelper.LogUpdate("[Press any key to exit]");
+                    ClientManager = new ClientManager(CLIENTS_FILE);
                     var bot = new Bot(ClientManager, ConfigManager);
                     bot.Run().Wait();
                 }
@@ -68,6 +104,7 @@ namespace TeamspeakActivityBot
                     } while ((ex = ex.InnerException) != null);
                 }
                 Console.WriteLine("Done.");
+                return 0;
             }
         }
 

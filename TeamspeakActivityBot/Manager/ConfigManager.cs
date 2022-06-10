@@ -1,6 +1,6 @@
 ﻿using System.IO;
 using TeamspeakActivityBot.Model;
-using TeamspeakActivityBot.Utils;
+using TeamspeakActivityBot.Helper;
 
 namespace TeamspeakActivityBot.Manager
 {
