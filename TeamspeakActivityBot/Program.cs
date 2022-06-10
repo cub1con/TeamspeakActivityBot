@@ -1,4 +1,5 @@
 ﻿using Sentry;
+using Sentry.Infrastructure;
 using System;
 using System.IO;
 using TeamSpeak3QueryApi.Net;
@@ -35,7 +36,7 @@ namespace TeamspeakActivityBot
             // Initialise Sentry, then do the rest
             using (SentrySdk.Init(o =>
             {
-                if (ConfigManager.Config.SentryDsn == "")
+                if (ConfigManager.Config.SentryDsn != "")
                 {
                     o.Dsn = ConfigManager.Config.SentryDsn;
                 }
@@ -45,8 +46,10 @@ namespace TeamspeakActivityBot
                 o.TracesSampleRate = 1.0;
                 o.ShutdownTimeout = TimeSpan.FromSeconds(5);
 #if DEBUG
-                o.Environment = "dev";
                 o.Debug = true;
+                o.Environment = "dev";
+                o.DiagnosticLevel = SentryLevel.Debug;
+                o.DiagnosticLogger = new TraceDiagnosticLogger(SentryLevel.Debug);
 #else
                 o.Environment = "prod";
 #endif
@@ -92,16 +95,7 @@ namespace TeamspeakActivityBot
                 }
                 catch (Exception ex)
                 {
-                    int depth = 0;
-                    do
-                    {
-                        Console.WriteLine("Exception #{0}: {1}", ++depth, ex.Message);
-                        if (ex.GetType() == typeof(QueryException))
-                            Console.WriteLine("Error: {0}", ((QueryException)ex).Error.Message);
-                        Console.WriteLine("Stacktrace: {0}", ex.StackTrace);
-                        Console.WriteLine("===========================================");
-                        SentrySdk.CaptureException(ex);
-                    } while ((ex = ex.InnerException) != null);
+                    HandleException(ex);
                 }
                 Console.WriteLine("Done.");
                 return 0;
@@ -111,10 +105,24 @@ namespace TeamspeakActivityBot
 
         static void DomainUnhandledExceptionHandler(object sender, UnhandledExceptionEventArgs args)
         {
+            LogHelper.LogError($"Runtime terminating: {args.IsTerminating}");
             Exception e = (Exception)args.ExceptionObject;
-            Console.WriteLine("MyHandler caught : " + e.Message);
-            Console.WriteLine("Runtime terminating: {0}", args.IsTerminating);
-            SentrySdk.CaptureException(e);
+            HandleException(e);
+        }
+
+        static void HandleException(Exception ex)
+        {
+            int depth = 0;
+            do
+            {
+                Console.WriteLine("Exception #{0}: {1}", ++depth, ex.Message);
+                if (ex.GetType() == typeof(QueryException))
+                    Console.WriteLine("Error: {0}", ((QueryException)ex).Error.Message);
+                Console.WriteLine("Stacktrace: {0}", ex.StackTrace);
+                Console.WriteLine("===========================================");
+                SentrySdk.CaptureException(ex);
+            } while ((ex = ex.InnerException) != null);
+
         }
     }
 }
