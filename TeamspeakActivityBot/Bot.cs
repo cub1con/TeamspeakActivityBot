@@ -96,7 +96,7 @@ namespace TeamspeakActivityBot
             var description = new StringBuilder();
 
             // Format for TopUsers
-            var topUsers = clients.OrderByDescending(x => x.ActiveTime).Where(x => x.ActiveTime != new TimeSpan()).ToArray();
+            var topUsers = clients.OrderByDescending(x => x.ActiveTime).ToArray();
 
             var totalTimeTop = TimeSpan.FromTicks(topUsers.Sum(x => x.ActiveTime.Ticks));
             description.AppendLine($"Seit {configManager.Config.LoggingSince} aktiv:");
@@ -115,7 +115,7 @@ namespace TeamspeakActivityBot
             description.AppendLine(Environment.NewLine);
 
             // Format for all users TODO: Make this optional?
-            var completeUsers = clients.OrderByDescending(x => x.ConnectedTime).Where(x => x.ConnectedTime != new TimeSpan()).ToArray();
+            var completeUsers = clients.OrderByDescending(x => x.ConnectedTime).ToArray();
 
             var totalTimeAll = TimeSpan.FromTicks(topUsers.Sum(x => x.ConnectedTime.Ticks));
             description.AppendLine($"Seit {configManager.Config.LoggingSince} verbunden:");
@@ -129,7 +129,7 @@ namespace TeamspeakActivityBot
                 ((double)totalTimeAll.Ticks / (double)WW2DURATION.Ticks).ToString("0.000")));
             description.Append(string.Format(
                 "-> Durchschnittlich verbundene Zeit: {0}",
-                TimeSpan.FromTicks(totalTimeAll.Ticks / completeUsers.Length).ToString(@"ddd\T\ hh\:mm\:ss")));
+                TimeSpan.FromTicks(totalTimeAll.Ticks  / completeUsers.Length).ToString(@"ddd\T\ hh\:mm\:ss")));
 
             return description.ToString();
         }
