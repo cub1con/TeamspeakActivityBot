@@ -6,17 +6,22 @@ namespace TeamspeakActivityBot.Helper
     {
         public static void LogUpdate(string message)
         {
-            Console.WriteLine($"[>] {message}");
+            Log($"[>] {message}");
         }
 
         public static void LogWarning(string message)
         {
-            Console.WriteLine($"[!] {message}");
+            Log($"[!] {message}");
         }
 
         public static void LogError(string message)
         {
-            Console.WriteLine($"[X] {message}");
+            Log($"[X] {message}");
+        }
+
+        private static void Log(string message)
+        {
+            Console.WriteLine($"{DateTime.Now:dd.MM.yy hh:mm:ss} | {message}");
         }
     }
 }
