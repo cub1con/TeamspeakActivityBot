@@ -55,14 +55,15 @@ namespace TeamspeakActivityBot
             await bot.Connect();
             await bot.Login(configManager.Config.QueryUsername, configManager.Config.QueryPassword);
 
-            if (configManager.Config.InstanceId == 0)
+            // Default fresh installed Server Instance is 1, but we query it from the server because it might be not 1
+            if (configManager.Config.InstanceId != 0)
             {
-                LogHelper.LogWarning("No Instance configured, fallback to query.");
-                await bot.UseServer((await bot.GetServers()).FirstOrDefault().Id);
+                await bot.UseServer(configManager.Config.InstanceId);
             }
             else
             {
-                await bot.UseServer(configManager.Config.InstanceId);
+                LogHelper.LogWarning("No Instance configured, fallback to query.");
+                await bot.UseServer((await bot.GetServers()).FirstOrDefault().Id);
             }
 
             return bot;
@@ -93,45 +94,48 @@ namespace TeamspeakActivityBot
 
         private string FormatChannelDescription(Client[] clients)
         {
-            var description = new StringBuilder();
+            // StringBuilder to hold the channel description
+            var sb = new StringBuilder();
 
             // Format for TopUsers
             var topUsers = clients.OrderByDescending(x => x.ActiveTime).ToArray();
 
             var totalTimeTop = TimeSpan.FromTicks(topUsers.Sum(x => x.ActiveTime.Ticks));
-            description.AppendLine($"Seit {configManager.Config.LoggingSince} aktiv:");
-            description.AppendLine(string.Join(Environment.NewLine, topUsers.Select(c => c.ToString()).ToArray()));
-            description.AppendLine("Fun facts:");
-            description.AppendLine(string.Format(
+            sb.AppendLine($"AKTIV:");
+            sb.AppendLine($"Seit {configManager.Config.LoggingSince}:");
+            sb.AppendLine(string.Join(Environment.NewLine, topUsers.Select(c => c.ToString()).ToArray()));
+            sb.AppendLine("Fun facts:");
+            sb.AppendLine(string.Format(
                 "-> Insgesamt verschwendete Zeit: {0}",
                 totalTimeTop.ToString(@"ddd\T\ hh\:mm\:ss")));
-            description.AppendLine(string.Format(
+            sb.AppendLine(string.Format(
                 "-> Damit hätten wir {0} mal den 2. Weltkrieg führen können!",
                 ((double)totalTimeTop.Ticks / (double)WW2DURATION.Ticks).ToString("0.000")));
-            description.AppendLine(string.Format(
+            sb.AppendLine(string.Format(
                 "-> Durchschnittlich verschwendete Zeit: {0}",
                 TimeSpan.FromTicks(totalTimeTop.Ticks / topUsers.Length).ToString(@"ddd\T\ hh\:mm\:ss")));
 
-            description.AppendLine(Environment.NewLine);
+            sb.AppendLine(Environment.NewLine);
 
             // Format for all users TODO: Make this optional?
             var completeUsers = clients.OrderByDescending(x => x.ConnectedTime).ToArray();
 
             var totalTimeAll = TimeSpan.FromTicks(topUsers.Sum(x => x.ConnectedTime.Ticks));
-            description.AppendLine($"Seit {configManager.Config.LoggingSince} verbunden:");
-            description.AppendLine(string.Join(Environment.NewLine, completeUsers.Select(c => c.ToConnectedTimeString()).ToArray()));
-            description.AppendLine("Fun facts:");
-            description.AppendLine(string.Format(
+            sb.AppendLine($"VERBUNDEN:");
+            sb.AppendLine($"Seit {configManager.Config.LoggingSince} verbunden:");
+            sb.AppendLine(string.Join(Environment.NewLine, completeUsers.Select(c => c.ToConnectedTimeString()).ToArray()));
+            sb.AppendLine("Fun facts:");
+            sb.AppendLine(string.Format(
                 "-> Insgesamt verbundene Zeit: {0}",
                 totalTimeAll.ToString(@"ddd\T\ hh\:mm\:ss")));
-            description.AppendLine(string.Format(
+            sb.AppendLine(string.Format(
                 "-> Damit hätten wir {0} mal den 2. Weltkrieg führen können!",
                 ((double)totalTimeAll.Ticks / (double)WW2DURATION.Ticks).ToString("0.000")));
-            description.Append(string.Format(
+            sb.Append(string.Format(
                 "-> Durchschnittlich verbundene Zeit: {0}",
                 TimeSpan.FromTicks(totalTimeAll.Ticks / completeUsers.Length).ToString(@"ddd\T\ hh\:mm\:ss")));
 
-            return description.ToString();
+            return sb.ToString();
         }
 
         private string FormatChannelName(Client topUser)
