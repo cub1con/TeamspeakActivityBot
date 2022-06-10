@@ -176,7 +176,7 @@ namespace TeamspeakActivityBot
 
         private bool UpdateClientTime(DateTime lastRun, GetClientDetailedInfo clientInfo)
         {
-            // Will always get set to true, whil TrackTotalTime is mandatory
+            // Will always get set to true, while TrackTotalTime is mandatory
             bool update = false;
             var calculatedTime = (DateTime.Now - lastRun);
 
@@ -197,10 +197,10 @@ namespace TeamspeakActivityBot
             update = true;
 
             // Track active Time
-            // Ignore user if is afk
+            // Ignore user if afk
             var conditionNotAway = !clientInfo.Away && !configManager.Config.LogAFK;
 
-            // Ignore user if is muted
+            // Ignore user if muted
             var conditionNotMuted = !clientInfo.IsInputOrOutputMuted() && !configManager.Config.LogOutputMuted;
 
             // Ignore user if idle is longer than threshold
