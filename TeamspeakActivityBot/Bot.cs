@@ -55,7 +55,7 @@ namespace TeamspeakActivityBot
             await bot.Connect();
             await bot.Login(configManager.Config.QueryUsername, configManager.Config.QueryPassword);
 
-            if(configManager.Config.InstanceId == 0)
+            if (configManager.Config.InstanceId == 0)
             {
                 LogHelper.LogWarning("No Instance configured, fallback to query.");
                 await bot.UseServer((await bot.GetServers()).FirstOrDefault().Id);
@@ -129,7 +129,7 @@ namespace TeamspeakActivityBot
                 ((double)totalTimeAll.Ticks / (double)WW2DURATION.Ticks).ToString("0.000")));
             description.Append(string.Format(
                 "-> Durchschnittlich verbundene Zeit: {0}",
-                TimeSpan.FromTicks(totalTimeAll.Ticks  / completeUsers.Length).ToString(@"ddd\T\ hh\:mm\:ss")));
+                TimeSpan.FromTicks(totalTimeAll.Ticks / completeUsers.Length).ToString(@"ddd\T\ hh\:mm\:ss")));
 
             return description.ToString();
         }
@@ -164,8 +164,8 @@ namespace TeamspeakActivityBot
                 .Where(c => !c.ServerGroupIds.Contains(this.configManager.Config.IgnoreUserGroup) && // Ignore User if in specified group
                 !configManager.Config.IgnoreChannels.Contains(c.ChannelId) &&                        // Ignore User if in specified channels
                 c.ServerGroupIds.Any(id => configManager.Config.UserGroups
-                .Contains(id))))trackedClients
-                .Add(cl);
+                .Contains(id)))) trackedClients
+                 .Add(cl);
 
             bool anyChange = false;
 

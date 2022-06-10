@@ -2,8 +2,8 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using TeamspeakActivityBot.Model;
 using TeamspeakActivityBot.Helper;
+using TeamspeakActivityBot.Model;
 
 namespace TeamspeakActivityBot.Manager
 {

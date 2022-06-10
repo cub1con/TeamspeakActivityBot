@@ -20,7 +20,7 @@ namespace TeamspeakActivityBot.Model
 
         public int[] UserGroups { get; set; }
         public int IgnoreUserGroup { get; set; }
-        public int[] IgnoreChannels {get; set;}
+        public int[] IgnoreChannels { get; set; }
 
         // Wildcard for Username: %NAME%
         public string TopListChannelNameFormat { get; set; }
@@ -46,7 +46,7 @@ namespace TeamspeakActivityBot.Model
             LogOutputMuted = false;
             UserGroups = new int[] { 9, 10, 12 };
             IgnoreUserGroup = 13;
-            IgnoreChannels = new int[] { 19, 18, 17, 16, 15, 14};
+            IgnoreChannels = new int[] { 19, 18, 17, 16, 15, 14 };
 
             SentryDsn = "";
         }
