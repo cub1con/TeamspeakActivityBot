@@ -165,16 +165,16 @@ namespace TeamspeakActivityBot
 
             while (!Console.KeyAvailable)
             {
-                //if (DateTime.Now - lastUserStatsUpdate >= configManager.Config.TimeLogInterval)
-                //{
-                //    await CollectOnlineTime(bot, lastUserStatsUpdate);
-                //    lastUserStatsUpdate = DateTime.Now;
-                //}
-                //if (DateTime.Now - lastChannelUpdate >= configManager.Config.ChannelUpdateInterval)
-                //{
-                //    await SetTopList(bot);
-                //    lastChannelUpdate = DateTime.Now;
-                //}
+                if (DateTime.Now - lastUserStatsUpdate >= configManager.Config.TimeLogInterval)
+                {
+                    await CollectOnlineTime(bot, lastUserStatsUpdate);
+                    lastUserStatsUpdate = DateTime.Now;
+                }
+                if (DateTime.Now - lastChannelUpdate >= configManager.Config.ChannelUpdateInterval)
+                {
+                    await SetTopList(bot);
+                    lastChannelUpdate = DateTime.Now;
+                }
                 await Task.Delay(TimeSpan.FromSeconds(1));
             }
         }
