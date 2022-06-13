@@ -9,7 +9,8 @@ namespace TeamspeakActivityBot.Misc
                                     @"  |    | /  /_\  \|    |  _/" + Environment.NewLine +
                                     @"  |    |/    |    \    |   \" + Environment.NewLine +
                                     @"  |____|\____|__  /______  /" + Environment.NewLine +
-                                    @"                \/       \/ ";
+                                    @"                \/       \/ " + Environment.NewLine +
+                                    @"TeamspeakActivityBot says hi";
 
         public static string[] Captions = new string[]
            {
