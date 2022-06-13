@@ -17,7 +17,6 @@ namespace TeamspeakActivityBot.BotHandler
 
             LogHelper.LogUpdate($"Starting {command.Command} - {msg.InvokerName}");
 
-
             var message = string.Empty;
 
             // Interpret command
@@ -96,8 +95,25 @@ namespace TeamspeakActivityBot.BotHandler
                     var memeRando = new Random().Next(0, Misc.Memes.Captions.Length - 1);
                     message = Misc.Memes.Captions[memeRando];
                     break;
+                case "hm":
+                case "hmm":
+                case "shrug":
+                    message = @"¯\_(ツ)_/¯";
+                    break;
+                case "tf":
+                case "tableflip":
+                    message = @"(╯°□°）╯︵ ┻━┻";
+                    break;
+                case "uf":
+                case "unflip":
+                    message = @"┬─┬ ノ( ゜-゜ノ)";
+                    break;
                 case "help":
-                    message = "Available Commands:\n!roll [Optional number]\n!kick ['random', Optional Username, yourself if no argument is provided]\n!meme(s) - Get some funky fresh memes!\n!help - You know.";
+                    message = "Available Commands:\n" +
+                            "!roll [Optional number]\n" + 
+                            "!kick ['random', Optional Username, yourself if no argument is provided]\n" + 
+                            "!meme(s) - Get some funky fresh memes!\n!help - You know.\n + " +
+                            "!shrug, !tableflip, !unflip - shrug and flip!";
                     break;
 
                 default:
@@ -105,7 +121,7 @@ namespace TeamspeakActivityBot.BotHandler
                     break;
             }
 
-            LogHelper.LogUpdate($"Finished {command} - {msg.InvokerName} -> {message}");
+            LogHelper.LogUpdate($"Finished {command.Command} - {msg.InvokerName} -> {message}");
             await queryClient.SendGlobalMessage($"@{msg.InvokerName} - {message}");
         }
 
