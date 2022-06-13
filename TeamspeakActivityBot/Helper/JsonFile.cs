@@ -42,7 +42,7 @@ namespace TeamspeakActivityBot.Helper
         {
             lock (fileLock)
             {
-                using (var fStream = this.jsonFile.Open(FileMode.OpenOrCreate, FileAccess.Write))
+                using (var fStream = this.jsonFile.OpenWrite())
                 {
                     using (var writer = new StreamWriter(fStream))
                     {
@@ -59,7 +59,6 @@ namespace TeamspeakActivityBot.Helper
             if (!File.Exists(this.jsonFile.FullName))
             {
                 _data = new T();
-                Save();
             }
 
 
