@@ -31,6 +31,7 @@ namespace TeamspeakActivityBot.Model
 
         // Just for dev
         public string SentryDsn { get; set; }
+        public bool EnableChatCommands { get; set; }
 
         public Config()
         {
@@ -47,6 +48,9 @@ namespace TeamspeakActivityBot.Model
             UserGroups = new int[] { 9, 10, 12 };
             IgnoreUserGroup = 13;
             IgnoreChannels = new int[] { 19, 18, 17, 16, 15, 14 };
+
+            // Chat commands
+            EnableChatCommands = false;
 
             // TopListChannel
             UpdateTopListChannel = true;
