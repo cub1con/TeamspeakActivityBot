@@ -16,7 +16,7 @@ namespace TeamspeakActivityBot
         private static ClientManager ClientManager;
         private static ConfigManager ConfigManager;
 
-        static int Main(string[] args)
+        static void Main(string[] args)
         {
             AppDomain currentDomain = AppDomain.CurrentDomain;
             currentDomain.UnhandledException += new UnhandledExceptionEventHandler(DomainUnhandledExceptionHandler);
@@ -55,36 +55,9 @@ namespace TeamspeakActivityBot
 #endif
             }))
             {
-
-                // Check for needed options
-                bool error = false;
-                if (ConfigManager.Config.QueryUsername == "")
-                {
-                    LogHelper.LogError("No QueryUsername set!");
-                    error = true;
-                }
-
-                if (ConfigManager.Config.QueryPassword == "")
-                {
-                    LogHelper.LogError("No QueryPassword set!");
-                    error = true;
-                }
-
-                if (ConfigManager.Config.TopListChannelId == -1)
-                {
-                    LogHelper.LogError("No Id set for TopListChannel set!");
-                    error = true;
-                }
-
-                if (!ConfigManager.Config.TopListChannelNameFormat.Contains("%NAME%"))
-                {
-                    LogHelper.LogError("No Wildcard '%NAME%' in 'TopListChannelNameFormat found!");
-                    error = true;
-                }
-
-                if (error)
-                    return 1; // Exit the Application
-
+                // Check for valid config and options
+                if (ConfigManager.ValidateConfig())
+                    Environment.Exit(1); // Exit the Application
 
                 try
                 {
@@ -98,7 +71,8 @@ namespace TeamspeakActivityBot
                     HandleException(ex);
                 }
                 Console.WriteLine("Done.");
-                return 0;
+
+                return;
             }
         }
 
