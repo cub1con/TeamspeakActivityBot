@@ -13,6 +13,10 @@ namespace TeamspeakActivityBot.BotHandler
     {
         public static async Task HandleMessage(TextMessage msg, TeamSpeakClient queryClient)
         {
+            // TODO: Add dynamic commands / adding text returning commands via command
+            // Example: !addNewCommand 'commandName' 'text the command will return
+            // TODO: Make commands more dynamic
+
             var command = GetCommandFromMessage(msg);
 
             LogHelper.LogUpdate($"Starting {command.Command} - {msg.InvokerName}");
@@ -110,8 +114,8 @@ namespace TeamspeakActivityBot.BotHandler
                     break;
                 case "help":
                     message = "Available Commands:\n" +
-                            "!roll [Optional number]\n" + 
-                            "!kick ['random', Optional Username, yourself if no argument is provided]\n" + 
+                            "!roll [Optional number]\n" +
+                            "!kick ['random', Optional Username, yourself if no argument is provided]\n" +
                             "!meme(s) - Get some funky fresh memes!\n!help - You know.\n + " +
                             "!shrug, !tableflip, !unflip - shrug and flip!";
                     break;
