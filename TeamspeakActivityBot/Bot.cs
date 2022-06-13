@@ -170,7 +170,7 @@ namespace TeamspeakActivityBot
                     await CollectOnlineTime(bot, lastUserStatsUpdate);
                     lastUserStatsUpdate = DateTime.Now;
                 }
-                if (DateTime.Now - lastChannelUpdate >= configManager.Config.ChannelUpdateInterval)
+                if (DateTime.Now - lastChannelUpdate >= configManager.Config.ChannelUpdateInterval && configManager.Config.UpdateTopListChannel)
                 {
                     await SetTopList(bot);
                     lastChannelUpdate = DateTime.Now;

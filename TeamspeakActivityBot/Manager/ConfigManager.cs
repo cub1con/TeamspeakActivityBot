@@ -48,19 +48,23 @@ namespace TeamspeakActivityBot.Manager
                 error = true;
             }
 
-            if (this.Config.TopListChannelId <= 0)
+            // Only validate options if feature is enabled
+            if (this.Config.UpdateTopListChannel)
             {
-                LogHelper.LogError("No valid TopListChannelId set!");
-                error = true;
+                if (this.Config.TopListChannelId <= 0)
+                {
+                    LogHelper.LogError("No valid TopListChannelId set!");
+                    error = true;
+                }
+
+                if (!this.Config.TopListChannelNameFormat.Contains("%NAME%"))
+                {
+                    LogHelper.LogError("No Wildcard '%NAME%' in 'TopListChannelNameFormat found!");
+                    error = true;
+                }
             }
 
-            if (!this.Config.TopListChannelNameFormat.Contains("%NAME%"))
-            {
-                LogHelper.LogError("No Wildcard '%NAME%' in 'TopListChannelNameFormat' found!");
-                error = true;
-            }
-
-            if(this.Config.SentryDsn != "")
+            if (this.Config.SentryDsn != "")
             {
                 LogHelper.LogUpdate($"Using Sentry DSN: {this.Config.SentryDsn}");
             }

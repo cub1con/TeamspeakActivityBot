@@ -11,7 +11,6 @@ namespace TeamspeakActivityBot.Model
         public int InstanceId { get; set; }
 
         public TimeSpan TimeLogInterval { get; set; }
-        public TimeSpan ChannelUpdateInterval { get; set; }
         public TimeSpan MaxIdleTime { get; set; }
         public DateTime LoggingSince { get; set; }
 
@@ -22,9 +21,13 @@ namespace TeamspeakActivityBot.Model
         public int IgnoreUserGroup { get; set; }
         public int[] IgnoreChannels { get; set; }
 
-        // Wildcard for Username: %NAME%
-        public string TopListChannelNameFormat { get; set; }
+
+        public bool UpdateTopListChannel { get; set; }
         public int TopListChannelId { get; set; }
+        // Wildcard for username: %NAME%
+        public string TopListChannelNameFormat { get; set; }
+        public TimeSpan ChannelUpdateInterval { get; set; }
+
 
         // Just for dev
         public string SentryDsn { get; set; }
@@ -38,15 +41,18 @@ namespace TeamspeakActivityBot.Model
             InstanceId = 0;
             LoggingSince = DateTime.Now;
             TimeLogInterval = TimeSpan.FromSeconds(10);
-            ChannelUpdateInterval = TimeSpan.FromSeconds(30);
             MaxIdleTime = TimeSpan.FromSeconds(30);
-            TopListChannelNameFormat = "[cspacer9]|| MVP: %NAME% ||";
-            TopListChannelId = -1;
             LogAFK = false;
             LogOutputMuted = false;
             UserGroups = new int[] { 9, 10, 12 };
             IgnoreUserGroup = 13;
             IgnoreChannels = new int[] { 19, 18, 17, 16, 15, 14 };
+
+            // TopListChannel
+            UpdateTopListChannel = true;
+            TopListChannelId = -1;
+            TopListChannelNameFormat = "[cspacer9]|| MVP: %NAME% ||";
+            ChannelUpdateInterval = TimeSpan.FromSeconds(30);
 
             SentryDsn = "";
         }
