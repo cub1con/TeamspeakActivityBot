@@ -75,13 +75,13 @@ namespace TeamspeakActivityBot
             while (!Console.KeyAvailable)
             {
                 // Collect ClientTimes after timespan if option is enabled
-                if (DateTime.Now - lastUserStatsUpdate >= configManager.Config.TrackTimeLogInterval && configManager.Config.TrackClientTimes && false)
+                if (DateTime.Now - lastUserStatsUpdate >= configManager.Config.TrackTimeLogInterval && configManager.Config.TrackClientTimes)
                 {
                     await CollectClientTimes(lastUserStatsUpdate);
                     lastUserStatsUpdate = DateTime.Now;
                 }
                 // Update the TopListChannel with toplist in description and MVP in channel name
-                if (DateTime.Now - lastChannelUpdate >= configManager.Config.TopListChannelUpdateInterval && configManager.Config.TopListUpdateChannel && false)
+                if (DateTime.Now - lastChannelUpdate >= configManager.Config.TopListChannelUpdateInterval && configManager.Config.TopListUpdateChannel)
                 {
                     await UpdateTopListChannel();
                     lastChannelUpdate = DateTime.Now;
