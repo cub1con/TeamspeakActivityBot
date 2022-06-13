@@ -30,7 +30,12 @@ namespace TeamspeakActivityBot
             Console.WriteLine("Debugger attached!");
 #endif
 
-            // Load Config
+            // "Draw" TAB logo
+            Console.WriteLine(Misc.Memes.Logo);
+
+
+            // Initiate config
+            LogHelper.LogUpdate("Loading config");
             ConfigManager = new ConfigManager(CONFIG_FILE);
 
             // Initialise Sentry, then do the rest
@@ -56,7 +61,7 @@ namespace TeamspeakActivityBot
             }))
             {
                 // Check for valid config and options
-                if (ConfigManager.ValidateConfig())
+                if (!ConfigManager.ValidateConfig())
                     Environment.Exit(1); // Exit the Application
 
                 try
@@ -70,8 +75,8 @@ namespace TeamspeakActivityBot
                 {
                     HandleException(ex);
                 }
-                Console.WriteLine("Done.");
 
+                LogHelper.LogUpdate("Done.");
                 return;
             }
         }

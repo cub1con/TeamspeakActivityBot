@@ -4,6 +4,13 @@ namespace TeamspeakActivityBot.Misc
 {
     public static class Memes
     {
+        public static string Logo = @"________________ __________ 
+\__    ___/  _  \\______   \
+  |    | /  /_\  \|    |  _/
+  |    |/    |    \    |   \
+  |____|\____|__  /______  /
+                \/       \/ ";
+
         public static string[] Captions = new string[]
            {
             "Only you can prevent forest fires!",

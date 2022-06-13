@@ -19,6 +19,10 @@ namespace TeamspeakActivityBot.Manager
             configFile.Save();
         }
 
+        /// <summary>
+        /// Validates config
+        /// </summary>
+        /// <returns>returns true if config is valid</returns>
         public bool ValidateConfig()
         {
             LogHelper.LogUpdate("Validating config");
@@ -72,12 +76,12 @@ namespace TeamspeakActivityBot.Manager
             if (error)
             {
                 LogHelper.LogError("Config is not valid. Terminating.");
-                return true;
+                return !error;
             }
 
             LogHelper.LogUpdate("Config validated");
 
-            return error;
+            return !error;
         }
     }
 }
