@@ -28,7 +28,7 @@ namespace TeamspeakActivityBot.Manager
             LogHelper.LogUpdate("Validating config");
 
             bool error = false;
-            if(this.Config.Host == "")
+            if (this.Config.Host == "")
             {
                 LogHelper.LogError("No Host set!");
                 error = true;

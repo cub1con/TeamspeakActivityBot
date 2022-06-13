@@ -4,12 +4,12 @@ namespace TeamspeakActivityBot.Misc
 {
     public static class Memes
     {
-        public static string Logo = @"________________ __________ 
-\__    ___/  _  \\______   \
-  |    | /  /_\  \|    |  _/
-  |    |/    |    \    |   \
-  |____|\____|__  /______  /
-                \/       \/ ";
+        public static string Logo = @"________________ __________" + Environment.NewLine +
+                                    @"\__    ___/  _  \\______   \" + Environment.NewLine +
+                                    @"  |    | /  /_\  \|    |  _/" + Environment.NewLine +
+                                    @"  |    |/    |    \    |   \" + Environment.NewLine +
+                                    @"  |____|\____|__  /______  /" + Environment.NewLine +
+                                    @"                \/       \/ ";
 
         public static string[] Captions = new string[]
            {
