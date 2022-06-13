@@ -19,7 +19,6 @@ namespace TeamspeakActivityBot.Helper
             jsonFile = file;
             _fileRead = false;
             _fileSaved = false;
-            Read();
         }
 
         public T Data
