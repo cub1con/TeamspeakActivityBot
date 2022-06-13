@@ -26,13 +26,13 @@ namespace TeamspeakActivityBot.BotHandler
                     int maxRoll = 6;
 
                     // Check for argument, should be a number
-                    if (command.Argument != string.Empty)
+                    if (command.Argument != null)
                     {
                         // TryParse the argument, if not valid, throw error
                         var parsed = int.TryParse(command.Argument, out maxRoll);
                         if (!parsed || maxRoll < 1) // Throw divided by zero exception
                         {
-                            if (maxRoll == 0)
+                            if (parsed && maxRoll == 0)
                             {
                                 message = new DivideByZeroException().ToString();
                                 break;
@@ -52,7 +52,7 @@ namespace TeamspeakActivityBot.BotHandler
                     var userId = -1;
 
                     // Check for argument
-                    if (command.Argument != string.Empty)
+                    if (command.Argument != null)
                     {
                         var users = await queryClient.GetClients();
                         var filterdUsers = users.Where(x => x.Type == ClientType.FullClient).ToArray();
