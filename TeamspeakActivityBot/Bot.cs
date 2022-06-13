@@ -55,6 +55,12 @@ namespace TeamspeakActivityBot
             var lastUserStatsUpdate = DateTime.Now;
             var lastChannelUpdate = DateTime.MinValue;
 
+            LogHelper.LogUpdate("Activated features:");
+            LogHelper.LogUpdate($" - TrackClientActiveTimes: {configManager.Config.TrackClientActiveTimes}");
+            LogHelper.LogUpdate($" - TrackClientConnectedTimes: {configManager.Config.TrackClientConnectedTimes}");
+            LogHelper.LogUpdate($" - TopListUpdateChannel: {configManager.Config.TopListUpdateChannel}");
+            LogHelper.LogUpdate($" - EnableChatCommands: {configManager.Config.ChatCommandsEnabled}");
+
 
             // If chat commands are enabled, subscribe to updates
             if (this.configManager.Config.EnableChatCommands)
@@ -69,13 +75,13 @@ namespace TeamspeakActivityBot
             while (!Console.KeyAvailable)
             {
                 // Collect ClientTimes after timespan if option is enabled
-                if (DateTime.Now - lastUserStatsUpdate >= configManager.Config.TrackTimeLogInterval && configManager.Config.TrackClientTimes)
+                if (DateTime.Now - lastUserStatsUpdate >= configManager.Config.TrackTimeLogInterval && configManager.Config.TrackClientTimes && false)
                 {
                     await CollectClientTimes(lastUserStatsUpdate);
                     lastUserStatsUpdate = DateTime.Now;
                 }
                 // Update the TopListChannel with toplist in description and MVP in channel name
-                if (DateTime.Now - lastChannelUpdate >= configManager.Config.TopListChannelUpdateInterval && configManager.Config.TopListUpdateChannel)
+                if (DateTime.Now - lastChannelUpdate >= configManager.Config.TopListChannelUpdateInterval && configManager.Config.TopListUpdateChannel && false)
                 {
                     await UpdateTopListChannel();
                     lastChannelUpdate = DateTime.Now;
