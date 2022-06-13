@@ -68,30 +68,33 @@ namespace TeamspeakActivityBot
 
             while (!Console.KeyAvailable)
             {
-                //if (DateTime.Now - lastUserStatsUpdate >= configManager.Config.TimeLogInterval)
-                //{
-                //    await CollectOnlineTime(lastUserStatsUpdate);
-                //    lastUserStatsUpdate = DateTime.Now;
-                //}
-                //if (DateTime.Now - lastChannelUpdate >= configManager.Config.ChannelUpdateInterval && configManager.Config.UpdateTopListChannel)
-                //{
-                //    await SetTopList();
-                //    lastChannelUpdate = DateTime.Now;
-                //}
+                // Collect ClientTimes after timespan if option is enabled
+                if (DateTime.Now - lastUserStatsUpdate >= configManager.Config.TrackTimeLogInterval && configManager.Config.TrackClientTimes)
+                {
+                    await CollectClientTimes(lastUserStatsUpdate);
+                    lastUserStatsUpdate = DateTime.Now;
+                }
+                // Update the TopListChannel with toplist in description and MVP in channel name
+                if (DateTime.Now - lastChannelUpdate >= configManager.Config.TopListChannelUpdateInterval && configManager.Config.TopListUpdateChannel)
+                {
+                    await UpdateTopListChannel();
+                    lastChannelUpdate = DateTime.Now;
+                }
                 await Task.Delay(TimeSpan.FromSeconds(1));
             }
         }
 
         private async Task<TeamSpeakClient> GetConnectedClient()
         {
-            var bot = new TeamSpeakClient(configManager.Config.Host, configManager.Config.Port);
+            // Create the actual client, connect, login and choose default instance
+            var bot = new TeamSpeakClient(configManager.Config.Host, configManager.Config.HostPort);
             await bot.Connect();
             await bot.Login(configManager.Config.QueryUsername, configManager.Config.QueryPassword);
 
             // Default fresh installed Server Instance is 1, but we query it from the server because it might be not 1
-            if (configManager.Config.InstanceId != 0)
+            if (configManager.Config.QueryInstanceId != 0)
             {
-                await bot.UseServer(configManager.Config.InstanceId);
+                await bot.UseServer(configManager.Config.QueryInstanceId);
             }
             else
             {
@@ -102,7 +105,7 @@ namespace TeamspeakActivityBot
             return bot;
         }
 
-        private async Task SetTopList()
+        private async Task UpdateTopListChannel()
         {
             if (!clientManager.Clients.Data.Any())
             {
@@ -112,14 +115,15 @@ namespace TeamspeakActivityBot
 
             LogHelper.LogUpdate("Updating channel info");
 
+            // Get users ordered DESC by the ActiveTime
             var clients = clientManager.Clients.Data.ToArray();
             var channelName = FormatChannelName(clients.OrderByDescending(x => x.ActiveTime).FirstOrDefault());
 
-            // Set the channel description
+            // Create the channel top list description
             var description = FormatChannelDescription(clients);
             await this.queryClient.EditChannel(configManager.Config.TopListChannelId, ChannelEdit.channel_description, description);
 
-            // Update channel name with mvp
+            // Update channel name with mvp, if name is not identical
             var channelInfo = await this.queryClient.GetChannelInfo(configManager.Config.TopListChannelId);
             if (channelInfo.Name != channelName)
                 await this.queryClient.EditChannel(configManager.Config.TopListChannelId, ChannelEdit.channel_name, channelName);
@@ -129,7 +133,7 @@ namespace TeamspeakActivityBot
         {
             // StringBuilder to hold the channel description
             var sb = new StringBuilder();
-            sb.AppendLine($"Seit {configManager.Config.LoggingSince}:");
+            sb.AppendLine($"Seit {configManager.Config.TrackLoggingSince}:");
 
             // Format for TopUsers
             var topUsers = clients.OrderByDescending(x => x.ActiveTime).ToArray();
@@ -138,9 +142,7 @@ namespace TeamspeakActivityBot
             sb.AppendLine($"AKTIV:");
             sb.AppendLine(string.Join(Environment.NewLine, topUsers.Select(c => c.ToString()).ToArray()));
             sb.AppendLine("Fun facts:");
-            sb.AppendLine(string.Format(
-                "-> Insgesamt verschwendete Zeit: {0}",
-                totalTimeTop.ToString(@"ddd\T\ hh\:mm\:ss")));
+            sb.AppendLine($"-> Insgesamt verschwendete Zeit: {totalTimeTop.ToString(@"ddd\T\ hh\:mm\:ss")}");
             sb.AppendLine(string.Format(
                 "-> Damit hätten wir {0} mal den 2. Weltkrieg führen können!",
                 ((double)totalTimeTop.Ticks / (double)WW2DURATION.Ticks).ToString("0.000")));
@@ -157,9 +159,7 @@ namespace TeamspeakActivityBot
             sb.AppendLine($"VERBUNDEN:");
             sb.AppendLine(string.Join(Environment.NewLine, completeUsers.Select(c => c.ToConnectedTimeString()).ToArray()));
             sb.AppendLine("Fun facts:");
-            sb.AppendLine(string.Format(
-                "-> Insgesamt verbundene Zeit: {0}",
-                totalTimeAll.ToString(@"ddd\T\ hh\:mm\:ss")));
+            sb.AppendLine($"-> Insgesamt verbundene Zeit: {totalTimeAll.ToString(@"ddd\T\ hh\:mm\:ss")}");
             sb.AppendLine(string.Format(
                 "-> Damit hätten wir {0} mal den 2. Weltkrieg führen können!",
                 ((double)totalTimeAll.Ticks / (double)WW2DURATION.Ticks).ToString("0.000")));
@@ -170,13 +170,25 @@ namespace TeamspeakActivityBot
             return sb.ToString();
         }
 
+        /// <summary>
+        /// Formats the TopListChannelName with the topUser name
+        /// </summary>
+        /// <param name="topUser">Client object of the topUser</param>
+        /// <returns></returns>
         private string FormatChannelName(Client topUser)
         {
+            // Get the template name and fill in the Client.DisplayName
             var channelName = configManager.Config.TopListChannelNameFormat.Replace("%NAME%", topUser.DisplayName);
+
+            // ChannelName to long for TeamSpeak?
             if (channelName.Length > MAX_CHANNEL_NAME_LENGTH)
             {
+                // Get max available username length for wildcard
                 var maxNameLength = configManager.Config.TopListChannelNameFormat.Length - "%NAME%".Length;
                 var userName = topUser.DisplayName;
+
+                // If topUser.DisplayName contains a '|' (pipe), cut it in front of the pipe
+                // else just get the name trimed to the max available username length
                 if (userName.Contains('|') && userName.IndexOf('|') <= maxNameLength)
                     userName = userName.Substring(0, userName.IndexOf('|')).Trim();
                 else
@@ -186,21 +198,23 @@ namespace TeamspeakActivityBot
             return channelName;
         }
 
-        private async Task CollectOnlineTime(DateTime lastRun)
+        private async Task CollectClientTimes(DateTime lastRun)
         {
+            // TODO: Add detection if user is alone in channel, then stop collect active time
             LogHelper.LogUpdate("Collecting online time");
             var clients = await this.queryClient.GetClients();
 
+            // Get a ClientInfo for every connected user
             var clientInfos = new List<GetClientDetailedInfo>();
             foreach (var cl in clients.Where(c => c.Type == ClientType.FullClient))
                 clientInfos.Add(await this.queryClient.GetClientInfo(cl.Id));
 
+            // Only get trackedClients
             var trackedClients = new List<GetClientDetailedInfo>();
-            foreach (var cl in clientInfos
-                .Where(c => !c.ServerGroupIds.Contains(this.configManager.Config.IgnoreUserGroup) && // Ignore User if in specified group
-                !configManager.Config.IgnoreChannels.Contains(c.ChannelId) &&                        // Ignore User if in specified channels
-                c.ServerGroupIds.Any(id => configManager.Config.UserGroups
-                .Contains(id))))
+            foreach (var cl in clientInfos.Where(c =>
+                !c.ServerGroupIds.Any(id => this.configManager.Config.TrackIgnoreUserGroups.Contains(id) &&     // Ignore User if in specified group
+                c.ServerGroupIds.Any(id => this.configManager.Config.TrackUserGroups.Contains(id))) &&               // Ignore user if not in specified usergroups
+                !configManager.Config.TrackIgnoreChannels.Contains(c.ChannelId)))                                    // Ignore User if in specified channels
                 trackedClients.Add(cl);
 
             bool anyChange = false;
@@ -212,7 +226,6 @@ namespace TeamspeakActivityBot
 
         private bool UpdateClientTime(DateTime lastRun, GetClientDetailedInfo clientInfo)
         {
-            // Will always get set to true, while TrackTotalTime is mandatory
             bool update = false;
             var calculatedTime = (DateTime.Now - lastRun);
 
@@ -229,18 +242,27 @@ namespace TeamspeakActivityBot
             }
 
             // Track total time
-            client.ConnectedTime += calculatedTime;
-            update = true;
+            if (configManager.Config.TrackClientConnectedTimes)
+            {
+                client.ConnectedTime += calculatedTime;
+                update = true;
+            }
+
+            // If we don't collect active time, we can return
+            if (!configManager.Config.TrackClientActiveTimes)
+            {
+                return update;
+            }
 
             // Track active Time
             // Ignore user if afk
-            var conditionNotAway = !clientInfo.Away && !configManager.Config.LogAFK;
+            var conditionNotAway = !clientInfo.Away && !configManager.Config.TrackAFK;
 
             // Ignore user if muted
-            var conditionNotMuted = !clientInfo.IsInputOrOutputMuted() && !configManager.Config.LogOutputMuted;
+            var conditionNotMuted = !clientInfo.IsInputOrOutputMuted() && !configManager.Config.TrackOutputMuted;
 
             // Ignore user if idle is longer than threshold
-            var conditionIdleTIme = clientInfo.IdleTime < configManager.Config.MaxIdleTime;
+            var conditionIdleTIme = clientInfo.IdleTime < configManager.Config.TrackMaxIdleTime;
 
             if (conditionNotAway && conditionNotMuted && conditionIdleTIme)
             {

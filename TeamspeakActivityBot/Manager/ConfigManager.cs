@@ -34,7 +34,7 @@ namespace TeamspeakActivityBot.Manager
                 error = true;
             }
 
-            if (this.Config.Port <= 0)
+            if (this.Config.HostPort <= 0)
             {
                 LogHelper.LogError("No valid Port set!");
                 error = true;
@@ -53,7 +53,7 @@ namespace TeamspeakActivityBot.Manager
             }
 
             // Only validate options if feature is enabled
-            if (this.Config.UpdateTopListChannel)
+            if (this.Config.TopListUpdateChannel)
             {
                 if (this.Config.TopListChannelId <= 0)
                 {
