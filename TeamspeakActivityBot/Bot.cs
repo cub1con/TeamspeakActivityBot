@@ -68,6 +68,8 @@ namespace TeamspeakActivityBot
                 // register server wide text notifications
                 await this.queryClient.RegisterTextServerNotification();
 
+                // TODO: Add a subscription to all channels to answer everywhere
+
                 queryClient.Subscribe<TextMessage>(HandleServerChatMessages);
             }
 
