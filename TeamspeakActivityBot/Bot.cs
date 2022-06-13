@@ -63,7 +63,7 @@ namespace TeamspeakActivityBot
 
 
             // If chat commands are enabled, subscribe to updates
-            if (this.configManager.Config.EnableChatCommands)
+            if (this.configManager.Config.ChatCommandsEnabled)
             {
                 // register server wide text notifications
                 await this.queryClient.RegisterTextServerNotification();

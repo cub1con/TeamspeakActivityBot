@@ -34,7 +34,7 @@ namespace TeamspeakActivityBot.Model
         public TimeSpan TopListChannelUpdateInterval { get; set; }
 
         // Chat commands
-        public bool EnableChatCommands { get; set; }
+        public bool ChatCommandsEnabled { get; set; }
 
         // Just for dev
         public string SentryDsn { get; set; }
@@ -60,7 +60,7 @@ namespace TeamspeakActivityBot.Model
             TrackIgnoreChannels = new int[] { 19, 18, 17, 16, 15, 14 };
 
             // Chat commands
-            EnableChatCommands = false;
+            ChatCommandsEnabled = false;
 
             // TopListChannel
             TopListUpdateChannel = true;
