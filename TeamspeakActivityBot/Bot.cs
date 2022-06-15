@@ -37,7 +37,11 @@ namespace TeamspeakActivityBot
             foreach (var msg in textMessages)
             {
                 // Prevent reacting to own messages
+#if DEBUG
+                if (msg.InvokerId == queryClientInfo.OriginServerId || !msg.Message.StartsWith('?'))
+#else
                 if (msg.InvokerId == queryClientInfo.OriginServerId || !msg.Message.StartsWith('!'))
+#endif
                 {
                     break;
                 }
@@ -210,29 +214,17 @@ namespace TeamspeakActivityBot
         {
             // TODO: Add detection if user is alone in channel, then stop collect active time
             LogHelper.LogUpdate("Collecting online time");
-            var clients = await this.queryClient.GetFullClients();
-
-            // Get a ClientInfo for every connected user
-            var clientInfos = new List<GetClientDetailedInfo>();
-            foreach (var cl in clients)
-                clientInfos.Add(await this.queryClient.GetClientInfo(cl.Id));
-
-            // Only get trackedClients
-            var trackedClients = new List<GetClientDetailedInfo>();
-            foreach (var cl in clientInfos.Where(c =>
-                !c.ServerGroupIds.Any(id => this.configManager.Config.TrackIgnoreUserGroups.Contains(id) &&     // Ignore User if in specified group
-                c.ServerGroupIds.Any(id => this.configManager.Config.TrackUserGroups.Contains(id))) &&               // Ignore user if not in specified usergroups
-                !configManager.Config.TrackIgnoreChannels.Contains(c.ChannelId)))                                    // Ignore User if in specified channels
-                trackedClients.Add(cl);
 
             bool anyChange = false;
 
-            foreach (var ci in trackedClients) anyChange |= UpdateClientTime(lastRun, ci);
+            var filteredClients = await this.queryClient.GetFilteredClients(configManager);
+
+            foreach (var ci in filteredClients) anyChange |= UpdatedClientTime(lastRun, ci);
             if (anyChange)
                 clientManager.Clients.Save();
         }
 
-        private bool UpdateClientTime(DateTime lastRun, GetClientDetailedInfo clientInfo)
+        private bool UpdatedClientTime(DateTime lastRun, GetClientDetailedInfo clientInfo)
         {
             bool update = false;
             var calculatedTime = (DateTime.Now - lastRun);

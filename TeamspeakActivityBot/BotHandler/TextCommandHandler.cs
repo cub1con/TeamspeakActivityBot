@@ -16,7 +16,7 @@ namespace TeamspeakActivityBot.BotHandler
         public static async Task HandleMessage(TextMessage msg, TeamSpeakClient queryClient, ConfigManager configManager)
         {
             // TODO: Add dynamic commands / adding text returning commands via command
-            // Example: !addNewCommand 'commandName' 'text the command will return
+            // Example: !addNewCommand 'commandName' 'text the command will return'
             // TODO: Make commands more dynamic
 
             var command = GetCommandFromMessage(msg);
@@ -49,8 +49,7 @@ namespace TeamspeakActivityBot.BotHandler
                         }
                     }
                     // Roll a rundom number and report back to user
-                    var random = new Random().Next(1, maxRoll);
-                    message = $"You rolled a {random}";
+                    message = $"You rolled a {new Random().Next(1, maxRoll)}";
                     break;
 
                 case "kick":
@@ -60,14 +59,14 @@ namespace TeamspeakActivityBot.BotHandler
                     // Check for argument
                     if (command.Argument != null)
                     {
-                        var users = await queryClient.GetFullClients();
-                        GetClientInfo user;
+                        var users = await queryClient.GetFilteredClients(configManager);
+                        GetClientDetailedInfo user;
 
                         // random picks a random user and kicks him
                         if (command.Argument == "random" || command.Argument == "r")
                         {
-                            var rnd = new Random().Next(1, users.Length);
-                            user = users[rnd - 1];
+                            var rnd = new Random().Next(1, users.Count);
+                            user = users[users.Count - 1];
                         }
                         else
                         {
@@ -81,7 +80,7 @@ namespace TeamspeakActivityBot.BotHandler
                         }
 
                         userName = user.NickName;
-                        userId = user.Id;
+                        userId = user.DatabaseId;
                     }
                     else
                     {
@@ -97,8 +96,7 @@ namespace TeamspeakActivityBot.BotHandler
                 case "memes":
                 case "meme":
                     // Get some funky fresh memes
-                    var memeRando = new Random().Next(0, Misc.Memes.Captions.Length - 1);
-                    message = Misc.Memes.Captions[memeRando];
+                    message = Misc.Memes.Captions[new Random().Next(0, Misc.Memes.Captions.Length - 1)];
                     break;
                 case "hm":
                 case "hmm":
