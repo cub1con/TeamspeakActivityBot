@@ -42,7 +42,7 @@ namespace TeamspeakActivityBot
                     break;
                 }
 
-                await BotHandler.TextCommandHandler.HandleMessage(msg, queryClient);
+                await BotHandler.TextCommandHandler.HandleMessage(msg, queryClient, configManager);
             }
         }
 
@@ -210,11 +210,11 @@ namespace TeamspeakActivityBot
         {
             // TODO: Add detection if user is alone in channel, then stop collect active time
             LogHelper.LogUpdate("Collecting online time");
-            var clients = await this.queryClient.GetClients();
+            var clients = await this.queryClient.GetFullClients();
 
             // Get a ClientInfo for every connected user
             var clientInfos = new List<GetClientDetailedInfo>();
-            foreach (var cl in clients.Where(c => c.Type == ClientType.FullClient))
+            foreach (var cl in clients)
                 clientInfos.Add(await this.queryClient.GetClientInfo(cl.Id));
 
             // Only get trackedClients

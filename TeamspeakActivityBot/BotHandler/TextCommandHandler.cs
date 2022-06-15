@@ -4,14 +4,16 @@ using System.Threading.Tasks;
 using TeamSpeak3QueryApi.Net.Specialized;
 using TeamSpeak3QueryApi.Net.Specialized.Notifications;
 using TeamSpeak3QueryApi.Net.Specialized.Responses;
+using TeamspeakActivityBot.Extensions;
 using TeamspeakActivityBot.Helper;
+using TeamspeakActivityBot.Manager;
 using TeamspeakActivityBot.Model;
 
 namespace TeamspeakActivityBot.BotHandler
 {
     public class TextCommandHandler
     {
-        public static async Task HandleMessage(TextMessage msg, TeamSpeakClient queryClient)
+        public static async Task HandleMessage(TextMessage msg, TeamSpeakClient queryClient, ConfigManager configManager)
         {
             // TODO: Add dynamic commands / adding text returning commands via command
             // Example: !addNewCommand 'commandName' 'text the command will return
@@ -58,20 +60,19 @@ namespace TeamspeakActivityBot.BotHandler
                     // Check for argument
                     if (command.Argument != null)
                     {
-                        var users = await queryClient.GetClients();
-                        var filterdUsers = users.Where(x => x.Type == ClientType.FullClient).ToArray();
+                        var users = await queryClient.GetFullClients();
                         GetClientInfo user;
 
                         // random picks a random user and kicks him
                         if (command.Argument == "random" || command.Argument == "r")
                         {
-                            var rnd = new Random().Next(1, filterdUsers.Length);
-                            user = filterdUsers[rnd - 1];
+                            var rnd = new Random().Next(1, users.Length);
+                            user = users[rnd - 1];
                         }
                         else
                         {
                             // Search for user to kick, report if not found
-                            user = filterdUsers.SingleOrDefault(x => x.NickName.ToLower().StartsWith(command.Argument));
+                            user = users.SingleOrDefault(x => x.NickName.ToLower().StartsWith(command.Argument));
                             if (user == null)
                             {
                                 message = "User not found";
