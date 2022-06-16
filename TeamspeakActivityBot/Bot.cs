@@ -147,6 +147,7 @@ namespace TeamspeakActivityBot
             var sb = new StringBuilder();
             sb.AppendLine($"Seit {configManager.Config.TrackLoggingSince}:");
 
+            // TODO: Only select first 10(?) users
             // Format for TopUsers
             var topUsers = clients.OrderByDescending(x => x.ActiveTime).ToArray();
 
