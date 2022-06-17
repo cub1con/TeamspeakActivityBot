@@ -102,13 +102,13 @@ namespace TeamspeakActivityBot.BotHandler
                         break;
                     }
 
-                    var clientId = await queryClient.GetUserByID(msg.InvokerId);
+                    var clientId = await queryClient.GetUserByID(msg.InvokerId);                    
 
                     var rankUser = userManager.GetUserById(clientId.DatabaseId);
 
-                    message = "Your times:\n"
-                            + $"Active time: {rankUser.ActiveTime.GetAsDaysAndTime()}\n"
-                            + $"Total time: {rankUser.TotalTime.GetAsDaysAndTime()}";
+                    message = $"Your rank:\n"
+                            + $"Active time: {userManager.Users.OrderByDescending(x => x.ActiveTime).ToList().IndexOf(rankUser) + 1} - {rankUser.ActiveTime.GetAsDaysAndTime()}\n"
+                            + $"Total time: {userManager.Users.OrderByDescending(x => x.TotalTime).ToList().IndexOf(rankUser) + 1} - {rankUser.TotalTime.GetAsDaysAndTime()}";
                     break;
 
                 case "meme":

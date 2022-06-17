@@ -124,7 +124,7 @@ namespace TeamspeakActivityBot
 
         private async Task UpdateTopListChannel()
         {
-            if (!userManager.Clients.Data.Any())
+            if (!userManager.Users.Any())
             {
                 LogHelper.LogWarning("Couldn't update channel info: no users!");
                 return;
@@ -133,7 +133,7 @@ namespace TeamspeakActivityBot
             LogHelper.LogUpdate("Updating channel info");
 
             // Get users ordered DESC by the ActiveTime
-            var clients = userManager.Clients.Data.ToArray();
+            var clients = userManager.Users.ToArray();
             var channelName = FormatChannelName(clients.OrderByDescending(x => x.ActiveTime).FirstOrDefault());
 
             // Create the channel top list description
@@ -227,7 +227,7 @@ namespace TeamspeakActivityBot
 
             foreach (var ci in filteredClients) anyChange |= UpdatedClientTime(lastRun, ci);
             if (anyChange)
-                userManager.Clients.Save();
+                userManager.Save();
         }
 
         private bool UpdatedClientTime(DateTime lastRun, GetClientDetailedInfo clientInfo)
