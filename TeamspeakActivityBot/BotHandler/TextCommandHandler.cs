@@ -102,10 +102,12 @@ namespace TeamspeakActivityBot.BotHandler
                         break;
                     }
 
-                    var rankUser = userManager.GetUserById(msg.InvokerId);
+                    var clientId = await queryClient.GetUserByID(msg.InvokerId);
+
+                    var rankUser = userManager.GetUserById(clientId.DatabaseId);
 
                     message = "Your times:\n"
-                            + $"Active time: {rankUser.ActiveTime.GetAsDaysAndTime()}"
+                            + $"Active time: {rankUser.ActiveTime.GetAsDaysAndTime()}\n"
                             + $"Total time: {rankUser.TotalTime.GetAsDaysAndTime()}";
                     break;
 
