@@ -18,7 +18,7 @@ namespace TeamspeakActivityBot
         private static readonly TimeSpan WW2DURATION = (new DateTime(1945, 9, 2) - new DateTime(1939, 9, 1));
         private const int MAX_CHANNEL_NAME_LENGTH = 40;
 
-        private UserManager clientManager;
+        private UserManager userManager;
 
         private ConfigManager configManager;
 
@@ -28,7 +28,7 @@ namespace TeamspeakActivityBot
 
         public Bot(UserManager cManager, ConfigManager cfgManager)
         {
-            this.clientManager = cManager;
+            this.userManager = cManager;
             this.configManager = cfgManager;
         }
 
@@ -46,7 +46,7 @@ namespace TeamspeakActivityBot
                     break;
                 }
 
-                await BotHandler.TextCommandHandler.HandleMessage(msg, queryClient, configManager);
+                await BotHandler.TextCommandHandler.HandleMessage(msg, queryClient, configManager, userManager);
             }
         }
 
@@ -119,7 +119,7 @@ namespace TeamspeakActivityBot
 
         private async Task UpdateTopListChannel()
         {
-            if (!clientManager.Clients.Data.Any())
+            if (!userManager.Clients.Data.Any())
             {
                 LogHelper.LogWarning("Couldn't update channel info: no users!");
                 return;
@@ -128,7 +128,7 @@ namespace TeamspeakActivityBot
             LogHelper.LogUpdate("Updating channel info");
 
             // Get users ordered DESC by the ActiveTime
-            var clients = clientManager.Clients.Data.ToArray();
+            var clients = userManager.Clients.Data.ToArray();
             var channelName = FormatChannelName(clients.OrderByDescending(x => x.ActiveTime).FirstOrDefault());
 
             // Create the channel top list description
@@ -222,7 +222,7 @@ namespace TeamspeakActivityBot
 
             foreach (var ci in filteredClients) anyChange |= UpdatedClientTime(lastRun, ci);
             if (anyChange)
-                clientManager.Clients.Save();
+                userManager.Clients.Save();
         }
 
         private bool UpdatedClientTime(DateTime lastRun, GetClientDetailedInfo clientInfo)
@@ -230,10 +230,10 @@ namespace TeamspeakActivityBot
             bool update = false;
             var calculatedTime = (DateTime.Now - lastRun);
 
-            var client = clientManager[clientInfo.DatabaseId];
+            var client = userManager[clientInfo.DatabaseId];
             if (client == null)
             {
-                client = clientManager.AddClient(new User()
+                client = userManager.AddClient(new User()
                 {
                     Id = clientInfo.DatabaseId,
                     DisplayName = clientInfo.NickName,

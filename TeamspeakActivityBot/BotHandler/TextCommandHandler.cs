@@ -13,7 +13,7 @@ namespace TeamspeakActivityBot.BotHandler
 {
     public class TextCommandHandler
     {
-        public static async Task HandleMessage(TextMessage msg, TeamSpeakClient queryClient, ConfigManager configManager)
+        public static async Task HandleMessage(TextMessage msg, TeamSpeakClient queryClient, ConfigManager configManager, UserManager userManager)
         {
             // TODO: Add dynamic commands / adding text returning commands via command
             // Example: !addNewCommand 'commandName' 'text the command will return'
@@ -93,6 +93,22 @@ namespace TeamspeakActivityBot.BotHandler
                     message = $"Kicked {userName} from the server";
                     break;
 
+                case "rank":
+                    // Get toplist ranking for user
+
+                    if (!configManager.Config.TrackClientTimes)
+                    {
+                        message = "Client time tracking not enabled.";
+                        break;
+                    }
+
+                    var rankUser = userManager.GetUserById(msg.InvokerId);
+
+                    message = "Your times:\n"
+                            + $"Active time: {rankUser.ActiveTime.GetAsDaysAndTime()}"
+                            + $"Total time: {rankUser.TotalTime.GetAsDaysAndTime()}";
+                    break;
+
                 case "memes":
                 case "meme":
                     // Get some funky fresh memes
@@ -112,11 +128,12 @@ namespace TeamspeakActivityBot.BotHandler
                     message = @"┬─┬ ノ( ゜-゜ノ)";
                     break;
                 case "help":
-                    message = "Available Commands:\n" +
-                            "!roll [Optional number]\n" +
-                            "!kick ['random', Optional Username, yourself if no argument is provided]\n" +
-                            "!meme(s) - Get some funky fresh memes!\n!help - You know.\n + " +
-                            "!shrug, !tableflip, !unflip - shrug and flip!";
+                    message = "Available Commands:\n"
+                            + "!kick [random/r, Optional Username] - kicks you, a random, or specified user\n"
+                            + "!meme(s) - Get some funky fresh memes!\n!help - You know.\n + "
+                            + "!rank - Returns your current timerank (if time tracking is enabled)\n"
+                            + "!roll [Optional number] - Rolls a dice with six sides [Rolls with x sides]\n"
+                            + "!shrug, !tableflip, !unflip - shrug and flip!";
                     break;
 
                 default:
