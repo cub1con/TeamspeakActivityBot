@@ -14,6 +14,16 @@ namespace TeamspeakActivityBot.Extensions
             return (await client.GetClients()).Where(x => x.Type == ClientType.FullClient);
         }
 
+        public static async Task<GetClientInfo> GetUserByID(this TeamSpeakClient client, int id)
+        {
+            return (await client.GetFullClients()).FirstOrDefault(x => x.Id == id);
+        }
+
+        public static async Task<GetClientInfo> GetUserByDbID(this TeamSpeakClient client, int id)
+        {
+            return (await client.GetFullClients()).FirstOrDefault(x => x.DatabaseId == id);
+        }
+
         public static async Task<List<GetClientDetailedInfo>> GetFilteredClients(this TeamSpeakClient client, ConfigManager configManager)
         {
             var returnList = new List<GetClientDetailedInfo>();
