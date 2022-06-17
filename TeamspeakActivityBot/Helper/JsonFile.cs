@@ -47,6 +47,7 @@ namespace TeamspeakActivityBot.Helper
             if (!File.Exists(this.jsonFile.FullName))
             {
                 _data = new T();
+                Save();
                 return;
             }
 
