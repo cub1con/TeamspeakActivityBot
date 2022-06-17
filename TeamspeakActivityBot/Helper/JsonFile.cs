@@ -11,9 +11,9 @@ namespace TeamspeakActivityBot.Helper
 
         private T _data;
 
-        public JsonFile(FileInfo file)
+        public JsonFile(string file)
         {
-            jsonFile = file;
+            jsonFile = new FileInfo(file);
         }
 
         public T Data
@@ -36,13 +36,9 @@ namespace TeamspeakActivityBot.Helper
         {
             lock (fileLock)
             {
-                using (var fStream = this.jsonFile.OpenWrite())
-                {
-                    using (var writer = new StreamWriter(fStream))
-                    {
-                        writer.Write(JsonConvert.SerializeObject(_data));
-                    }
-                }
+                using var fStream = this.jsonFile.OpenWrite();
+                using var writer = new StreamWriter(fStream);
+                writer.Write(JsonConvert.SerializeObject(_data));
             }
         }
 
@@ -57,13 +53,9 @@ namespace TeamspeakActivityBot.Helper
 
             lock (fileLock)
             {
-                using (var fStream = this.jsonFile.OpenRead())
-                {
-                    using (var reader = new StreamReader(fStream))
-                    {
-                        _data = JsonConvert.DeserializeObject<T>(reader.ReadToEnd());
-                    }
-                }
+                using var fStream = this.jsonFile.OpenRead();
+                using var reader = new StreamReader(fStream);
+                _data = JsonConvert.DeserializeObject<T>(reader.ReadToEnd());
             }
         }
     }

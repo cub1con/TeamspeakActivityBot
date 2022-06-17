@@ -11,7 +11,7 @@ namespace TeamspeakActivityBot.Manager
     {
         public JsonFile<List<User>> Clients { get; set; }
 
-        public UserManager(FileInfo file)
+        public UserManager(string file)
         {
             this.Clients = new JsonFile<List<User>>(file);
         }

@@ -10,8 +10,8 @@ namespace TeamspeakActivityBot
 {
     class Program
     {
-        private static FileInfo CLIENTS_FILE = new FileInfo(Path.Combine(Environment.CurrentDirectory, "clients.json"));
-        private static FileInfo CONFIG_FILE = new FileInfo(Path.Combine(Environment.CurrentDirectory, "config.json"));
+        private static string CLIENTS_FILE = Path.Combine(Environment.CurrentDirectory, "clients.json");
+        private static string CONFIG_FILE = Path.Combine(Environment.CurrentDirectory, "config.json");
 
         private static UserManager ClientManager;
         private static ConfigManager ConfigManager;

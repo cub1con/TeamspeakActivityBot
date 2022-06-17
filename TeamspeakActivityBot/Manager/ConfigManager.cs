@@ -9,7 +9,7 @@ namespace TeamspeakActivityBot.Manager
         public Config Config => configFile.Data;
         private JsonFile<Config> configFile;
 
-        public ConfigManager(FileInfo file)
+        public ConfigManager(string file)
         {
             configFile = new JsonFile<Config>(file);
         }
