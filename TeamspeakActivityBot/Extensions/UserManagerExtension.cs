@@ -4,7 +4,7 @@ using TeamspeakActivityBot.Model;
 
 namespace TeamspeakActivityBot.Extensions
 {
-    public static class ClientManagerExtension
+    public static class UserManagerExtension
     {
         public static User GetUserById(this UserManager clientManager, int clientId)
         {

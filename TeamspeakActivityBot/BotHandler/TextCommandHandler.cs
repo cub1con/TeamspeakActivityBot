@@ -109,8 +109,8 @@ namespace TeamspeakActivityBot.BotHandler
                             + $"Total time: {rankUser.TotalTime.GetAsDaysAndTime()}";
                     break;
 
-                case "memes":
                 case "meme":
+                case "memes":
                     // Get some funky fresh memes
                     message = Misc.Memes.Captions[new Random().Next(0, Misc.Memes.Captions.Length - 1)];
                     break;
