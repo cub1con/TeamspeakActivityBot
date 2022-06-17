@@ -43,7 +43,7 @@ namespace TeamspeakActivityBot
                 if (msg.InvokerId == queryClientInfo.OriginServerId || !msg.Message.StartsWith('!'))
 #endif
                 {
-                    break;
+                    continue;
                 }
 
                 await BotHandler.TextCommandHandler.HandleMessage(msg, queryClient, configManager, userManager);
@@ -67,12 +67,16 @@ namespace TeamspeakActivityBot
 
 
             // If chat commands are enabled, subscribe to updates
+            // Those only work in global chat tho
             if (this.configManager.Config.ChatCommandsEnabled)
             {
                 // register server wide text notifications
                 await this.queryClient.RegisterTextServerNotification();
 
-                // TODO: Add a subscription to all channels to answer everywhere
+                // Here would be code to register all channels, but this
+                // is not really possible, because the queryClient has to be
+                // in the channel to get the notification
+                // await queryClient.RegisterTextChannelNotification();
 
                 queryClient.Subscribe<TextMessage>(HandleServerChatMessages);
             }
