@@ -11,21 +11,16 @@ namespace TeamspeakActivityBot.Helper
 
         private T _data;
 
-        private bool _fileRead;
-        private bool _fileSaved;
-
         public JsonFile(FileInfo file)
         {
             jsonFile = file;
-            _fileRead = false;
-            _fileSaved = false;
         }
 
         public T Data
         {
             get
             {
-                if (!_fileRead)
+                if (_data == null)
                     Read();
 
                 return _data;
@@ -49,8 +44,6 @@ namespace TeamspeakActivityBot.Helper
                     }
                 }
             }
-
-            _fileSaved = true;
         }
 
         public void Read()
@@ -58,6 +51,7 @@ namespace TeamspeakActivityBot.Helper
             if (!File.Exists(this.jsonFile.FullName))
             {
                 _data = new T();
+                return;
             }
 
 
@@ -70,13 +64,6 @@ namespace TeamspeakActivityBot.Helper
                         _data = JsonConvert.DeserializeObject<T>(reader.ReadToEnd());
                     }
                 }
-            }
-
-            _fileRead = true;
-
-            if (!_fileSaved)
-            {
-                Save();
             }
         }
     }
