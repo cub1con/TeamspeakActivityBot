@@ -1,5 +1,4 @@
-﻿using System.IO;
-using TeamspeakActivityBot.Helper;
+﻿using TeamspeakActivityBot.Helper;
 using TeamspeakActivityBot.Model;
 
 namespace TeamspeakActivityBot.Manager

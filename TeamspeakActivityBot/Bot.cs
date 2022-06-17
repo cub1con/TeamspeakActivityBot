@@ -111,7 +111,8 @@ namespace TeamspeakActivityBot
             else
             {
                 LogHelper.LogWarning("No Instance configured, fallback to query.");
-                await bot.UseServer((await bot.GetServers()).FirstOrDefault().Id);
+                var availableInstances = (await bot.GetServers()).ToArray();
+                await bot.UseServer(availableInstances.FirstOrDefault().Id);
             }
 
             return bot;
