@@ -18,7 +18,7 @@ namespace TeamspeakActivityBot
         private static readonly TimeSpan WW2DURATION = (new DateTime(1945, 9, 2) - new DateTime(1939, 9, 1));
         private const int MAX_CHANNEL_NAME_LENGTH = 40;
 
-        private ClientManager clientManager;
+        private UserManager clientManager;
 
         private ConfigManager configManager;
 
@@ -26,7 +26,7 @@ namespace TeamspeakActivityBot
 
         private WhoAmI queryClientInfo;
 
-        public Bot(ClientManager cManager, ConfigManager cfgManager)
+        public Bot(UserManager cManager, ConfigManager cfgManager)
         {
             this.clientManager = cManager;
             this.configManager = cfgManager;
@@ -141,7 +141,7 @@ namespace TeamspeakActivityBot
                 await this.queryClient.EditChannel(configManager.Config.TopListChannelId, ChannelEdit.channel_name, channelName);
         }
 
-        private string FormatChannelDescription(Client[] clients)
+        private string FormatChannelDescription(User[] clients)
         {
             // StringBuilder to hold the channel description
             var sb = new StringBuilder();
@@ -153,7 +153,7 @@ namespace TeamspeakActivityBot
 
             var clientsActiveTimeTotal = TimeSpan.FromTicks(clientsActiveTime.Sum(x => x.ActiveTime.Ticks));
             sb.AppendLine($"AKTIV:");
-            sb.AppendLine(string.Join(Environment.NewLine, clientsActiveTime.Select(c => c.ToString()).ToArray()));
+            sb.AppendLine(string.Join(Environment.NewLine, clientsActiveTime.Select(c => c.GetActiveTimeAndName()).ToArray()));
             sb.AppendLine("Fun facts:");
             sb.AppendLine($"-> Insgesamt verschwendete Zeit: {clientsActiveTimeTotal.ToString(@"ddd\T\ hh\:mm\:ss")}");
             sb.AppendLine(string.Format(
@@ -166,11 +166,11 @@ namespace TeamspeakActivityBot
             sb.AppendLine(Environment.NewLine);
 
             // Format for all users TODO: Make this optional?
-            var clientsCompleteTime = clients.OrderByDescending(x => x.ConnectedTime).Take(10).ToArray();
+            var clientsCompleteTime = clients.OrderByDescending(x => x.TotalTime).Take(10).ToArray();
 
-            var clientsCompleteTimeTotal = TimeSpan.FromTicks(clientsCompleteTime.Sum(x => x.ConnectedTime.Ticks));
+            var clientsCompleteTimeTotal = TimeSpan.FromTicks(clientsCompleteTime.Sum(x => x.TotalTime.Ticks));
             sb.AppendLine($"VERBUNDEN:");
-            sb.AppendLine(string.Join(Environment.NewLine, clientsCompleteTime.Select(c => c.ToConnectedTimeString()).ToArray()));
+            sb.AppendLine(string.Join(Environment.NewLine, clientsCompleteTime.Select(c => c.GetTotalTimeAndName()).ToArray()));
             sb.AppendLine("Fun facts:");
             sb.AppendLine($"-> Insgesamt verbundene Zeit: {clientsCompleteTimeTotal.ToString(@"ddd\T\ hh\:mm\:ss")}");
             sb.AppendLine(string.Format(
@@ -188,7 +188,7 @@ namespace TeamspeakActivityBot
         /// </summary>
         /// <param name="topUser">Client object of the topUser</param>
         /// <returns></returns>
-        private string FormatChannelName(Client topUser)
+        private string FormatChannelName(User topUser)
         {
             // Get the template name and fill in the Client.DisplayName
             var channelName = configManager.Config.TopListChannelNameFormat.Replace("%NAME%", topUser.DisplayName);
@@ -233,19 +233,19 @@ namespace TeamspeakActivityBot
             var client = clientManager[clientInfo.DatabaseId];
             if (client == null)
             {
-                client = clientManager.AddClient(new Client()
+                client = clientManager.AddClient(new User()
                 {
-                    ClientId = clientInfo.DatabaseId,
+                    Id = clientInfo.DatabaseId,
                     DisplayName = clientInfo.NickName,
                     ActiveTime = TimeSpan.Zero,
-                    ConnectedTime = TimeSpan.Zero
+                    TotalTime = TimeSpan.Zero
                 });
             }
 
             // Track total time
             if (configManager.Config.TrackClientConnectedTimes)
             {
-                client.ConnectedTime += calculatedTime;
+                client.TotalTime += calculatedTime;
                 update = true;
             }
 

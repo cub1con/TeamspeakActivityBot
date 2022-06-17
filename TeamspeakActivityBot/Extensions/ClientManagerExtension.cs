@@ -6,9 +6,9 @@ namespace TeamspeakActivityBot.Extensions
 {
     public static class ClientManagerExtension
     {
-        public static Client GetUserById(this ClientManager clientManager, int clientId)
+        public static User GetUserById(this UserManager clientManager, int clientId)
         {
-            return clientManager.Clients.Data.FirstOrDefault(x => x.ClientId == clientId);
+            return clientManager.Clients.Data.FirstOrDefault(x => x.Id == clientId);
         }
     }
 }

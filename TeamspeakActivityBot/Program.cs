@@ -13,7 +13,7 @@ namespace TeamspeakActivityBot
         private static FileInfo CLIENTS_FILE = new FileInfo(Path.Combine(Environment.CurrentDirectory, "clients.json"));
         private static FileInfo CONFIG_FILE = new FileInfo(Path.Combine(Environment.CurrentDirectory, "config.json"));
 
-        private static ClientManager ClientManager;
+        private static UserManager ClientManager;
         private static ConfigManager ConfigManager;
 
         static void Main(string[] args)
@@ -67,7 +67,7 @@ namespace TeamspeakActivityBot
                 try
                 {
                     LogHelper.LogUpdate("[Press any key to exit]");
-                    ClientManager = new ClientManager(CLIENTS_FILE);
+                    ClientManager = new UserManager(CLIENTS_FILE);
                     var bot = new Bot(ClientManager, ConfigManager);
                     bot.Run().Wait();
                 }
