@@ -149,36 +149,36 @@ namespace TeamspeakActivityBot
 
             // TODO: Only select first 10(?) users
             // Format for TopUsers
-            var topUsers = clients.OrderByDescending(x => x.ActiveTime).ToArray();
+            var clientsActiveTime = clients.OrderByDescending(x => x.ActiveTime).Take(10).ToArray();
 
-            var totalTimeTop = TimeSpan.FromTicks(topUsers.Sum(x => x.ActiveTime.Ticks));
+            var clientsActiveTimeTotal = TimeSpan.FromTicks(clientsActiveTime.Sum(x => x.ActiveTime.Ticks));
             sb.AppendLine($"AKTIV:");
-            sb.AppendLine(string.Join(Environment.NewLine, topUsers.Select(c => c.ToString()).ToArray()));
+            sb.AppendLine(string.Join(Environment.NewLine, clientsActiveTime.Select(c => c.ToString()).ToArray()));
             sb.AppendLine("Fun facts:");
-            sb.AppendLine($"-> Insgesamt verschwendete Zeit: {totalTimeTop.ToString(@"ddd\T\ hh\:mm\:ss")}");
+            sb.AppendLine($"-> Insgesamt verschwendete Zeit: {clientsActiveTimeTotal.ToString(@"ddd\T\ hh\:mm\:ss")}");
             sb.AppendLine(string.Format(
                 "-> Damit hätten wir {0} mal den 2. Weltkrieg führen können!",
-                ((double)totalTimeTop.Ticks / (double)WW2DURATION.Ticks).ToString("0.000")));
+                ((double)clientsActiveTimeTotal.Ticks / (double)WW2DURATION.Ticks).ToString("0.000")));
             sb.AppendLine(string.Format(
                 "-> Durchschnittlich verschwendete Zeit: {0}",
-                TimeSpan.FromTicks(totalTimeTop.Ticks / topUsers.Length).ToString(@"ddd\T\ hh\:mm\:ss")));
+                TimeSpan.FromTicks(clientsActiveTimeTotal.Ticks / clientsActiveTime.Length).ToString(@"ddd\T\ hh\:mm\:ss")));
 
             sb.AppendLine(Environment.NewLine);
 
             // Format for all users TODO: Make this optional?
-            var completeUsers = clients.OrderByDescending(x => x.ConnectedTime).ToArray();
+            var clientsCompleteTime = clients.OrderByDescending(x => x.ConnectedTime).Take(10).ToArray();
 
-            var totalTimeAll = TimeSpan.FromTicks(topUsers.Sum(x => x.ConnectedTime.Ticks));
+            var clientsCompleteTimeTotal = TimeSpan.FromTicks(clientsCompleteTime.Sum(x => x.ConnectedTime.Ticks));
             sb.AppendLine($"VERBUNDEN:");
-            sb.AppendLine(string.Join(Environment.NewLine, completeUsers.Select(c => c.ToConnectedTimeString()).ToArray()));
+            sb.AppendLine(string.Join(Environment.NewLine, clientsCompleteTime.Select(c => c.ToConnectedTimeString()).ToArray()));
             sb.AppendLine("Fun facts:");
-            sb.AppendLine($"-> Insgesamt verbundene Zeit: {totalTimeAll.ToString(@"ddd\T\ hh\:mm\:ss")}");
+            sb.AppendLine($"-> Insgesamt verbundene Zeit: {clientsCompleteTimeTotal.ToString(@"ddd\T\ hh\:mm\:ss")}");
             sb.AppendLine(string.Format(
                 "-> Damit hätten wir {0} mal den 2. Weltkrieg führen können!",
-                ((double)totalTimeAll.Ticks / (double)WW2DURATION.Ticks).ToString("0.000")));
+                ((double)clientsCompleteTimeTotal.Ticks / (double)WW2DURATION.Ticks).ToString("0.000")));
             sb.Append(string.Format(
                 "-> Durchschnittlich verbundene Zeit: {0}",
-                TimeSpan.FromTicks(totalTimeAll.Ticks / completeUsers.Length).ToString(@"ddd\T\ hh\:mm\:ss")));
+                TimeSpan.FromTicks(clientsCompleteTimeTotal.Ticks / clientsCompleteTime.Length).ToString(@"ddd\T\ hh\:mm\:ss")));
 
             return sb.ToString();
         }
