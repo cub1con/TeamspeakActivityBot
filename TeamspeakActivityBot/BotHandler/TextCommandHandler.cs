@@ -29,7 +29,7 @@ namespace TeamspeakActivityBot.BotHandler
             switch (command.Command)
             {
                 case "roll":
-                    int maxRoll = 6;
+                    int maxRoll = 7; // 7 because random will roll BETWEEN not including
 
                     // Check for argument, should be a number
                     if (command.Argument != null)
@@ -59,7 +59,7 @@ namespace TeamspeakActivityBot.BotHandler
                     // Check for argument
                     if (command.Argument != null)
                     {
-                        var users = await queryClient.GetFilteredClients(configManager);
+                        var users = await queryClient.GetFullClientsDetailedInfo();
                         GetClientDetailedInfo user;
 
                         // random picks a random user and kicks him
