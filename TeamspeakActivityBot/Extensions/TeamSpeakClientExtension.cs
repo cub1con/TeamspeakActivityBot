@@ -14,6 +14,16 @@ namespace TeamspeakActivityBot.Extensions
             return (await client.GetClients()).Where(x => x.Type == ClientType.FullClient);
         }
 
+        public static async Task<List<GetClientDetailedInfo>> GetFullClientsDetailedInfo(this TeamSpeakClient client)
+        {
+            var returnList = new List<GetClientDetailedInfo>();
+            foreach (var clientInfo in await client.GetFullClients())
+            {
+                returnList.Add(await client.GetClientInfo(clientInfo.Id));
+            }
+            return returnList;
+        }
+
         public static async Task<GetClientInfo> GetUserByID(this TeamSpeakClient client, int id)
         {
             return (await client.GetFullClients()).FirstOrDefault(x => x.Id == id);
@@ -29,28 +39,26 @@ namespace TeamspeakActivityBot.Extensions
             var returnList = new List<GetClientDetailedInfo>();
 
             // Get a ClientInfo for every connected user
-            foreach (var cl in await client.GetFullClients())
+            foreach (var cl in await client.GetFullClientsDetailedInfo())
             {
-                var tmp = await client.GetClientInfo(cl.Id);
-
                 // Check if User is in an ignored group, break
-                if (tmp.ServerGroupIds.Any(id => configManager.Config.TrackIgnoreUserGroups.Contains(id)))
+                if (cl.ServerGroupIds.Any(id => configManager.Config.TrackIgnoreUserGroups.Contains(id)))
                 {
                     continue;
                 }
 
                 // Check if User is in an Tracked group, continue
-                if (!tmp.ServerGroupIds.Any(id => configManager.Config.TrackUserGroups.Contains(id)))
+                if (!cl.ServerGroupIds.Any(id => configManager.Config.TrackUserGroups.Contains(id)))
                 {
                     continue;
                 }
 
                 // Check if User is in an ignored channel, break
-                if (configManager.Config.TrackIgnoreChannels.Contains(tmp.ChannelId))
+                if (configManager.Config.TrackIgnoreChannels.Contains(cl.ChannelId))
                 {
                     continue;
                 }
-                returnList.Add(tmp);
+                returnList.Add(cl);
             }
             return returnList;
         }

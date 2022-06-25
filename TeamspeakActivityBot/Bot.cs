@@ -218,34 +218,39 @@ namespace TeamspeakActivityBot
 
         private async Task CollectClientTimes(DateTime lastRun)
         {
-            // TODO: Add detection if user is alone in channel, then stop collect active time
             LogHelper.LogUpdate("Collecting online time");
 
             bool anyChange = false;
 
-            var filteredClients = await this.queryClient.GetFilteredClients(configManager);
+            // We want to pass all users here, because the function handles if the user is untracked etc.
+            var clients = await this.queryClient.GetFullClientsDetailedInfo();
 
-            foreach (var ci in filteredClients) anyChange |= UpdatedClientTime(lastRun, ci);
+            foreach (var ci in clients) anyChange |= UpdateUserTime(lastRun, ci);
             if (anyChange)
                 userManager.Save();
         }
 
-        private bool UpdatedClientTime(DateTime lastRun, GetClientDetailedInfo clientInfo)
+        /// <summary>
+        /// Updates the user.ActiveTime and user.Total time if features are enabled
+        /// and user will be tracked
+        /// </summary>
+        /// <param name="lastRun">The last runtime of time collecting</param>
+        /// <param name="clientInfo">The detailed client info</param>
+        /// <returns>If client got updated</returns>
+        private bool UpdateUserTime(DateTime lastRun, GetClientDetailedInfo clientInfo)
         {
+            // Check if User is in an ignored or not in a tracked group and ignore if true
+            if(clientInfo.ServerGroupIds.Any(id => 
+            configManager.Config.TrackIgnoreUserGroups.Contains(id) || 
+            !configManager.Config.TrackUserGroups.Contains(id)))
+            {
+                return false;
+            }
+
             bool update = false;
             var calculatedTime = (DateTime.Now - lastRun);
 
-            var client = userManager[clientInfo.DatabaseId];
-            if (client == null)
-            {
-                client = userManager.AddClient(new User()
-                {
-                    Id = clientInfo.DatabaseId,
-                    DisplayName = clientInfo.NickName,
-                    ActiveTime = TimeSpan.Zero,
-                    TotalTime = TimeSpan.Zero
-                });
-            }
+            var client = userManager.GetUser(clientInfo);
 
             // Track total time
             if (configManager.Config.TrackClientConnectedTimes)
@@ -260,7 +265,13 @@ namespace TeamspeakActivityBot
                 return update;
             }
 
+
             // Track active Time
+            // TODO: Add detection if user is alone in channel, then stop collect active time
+
+            // Check if user is in an ignored channel (afk, default connect channel)
+            var conditionNotInIgnoredChannel = !configManager.Config.TrackIgnoreChannels.Contains(clientInfo.ChannelId);
+
             // Ignore user if afk
             var conditionNotAway = !clientInfo.Away && !configManager.Config.TrackAFK;
 
@@ -270,7 +281,8 @@ namespace TeamspeakActivityBot
             // Ignore user if idle is longer than threshold
             var conditionIdleTIme = clientInfo.IdleTime < configManager.Config.TrackMaxIdleTime;
 
-            if (conditionNotAway && conditionNotMuted && conditionIdleTIme)
+            if (conditionNotAway && conditionNotMuted && 
+                conditionIdleTIme && conditionNotInIgnoredChannel)
             {
                 client.ActiveTime += calculatedTime;
                 update = true;
