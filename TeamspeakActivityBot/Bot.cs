@@ -225,7 +225,9 @@ namespace TeamspeakActivityBot
             // We want to pass all users here, because the function handles if the user is untracked etc.
             var clients = await this.queryClient.GetFullClientsDetailedInfo();
 
-            foreach (var ci in clients) anyChange |= UpdateUserTime(lastRun, ci);
+            foreach (var ci in clients)
+                anyChange |= UpdateUserTime(lastRun, ci);
+
             if (anyChange)
                 userManager.Save();
         }
@@ -240,9 +242,9 @@ namespace TeamspeakActivityBot
         private bool UpdateUserTime(DateTime lastRun, GetClientDetailedInfo clientInfo)
         {
             // Check if User is in an ignored or not in a tracked group and ignore if true
-            if(clientInfo.ServerGroupIds.Any(id => 
-            configManager.Config.TrackIgnoreUserGroups.Contains(id) || 
-            !configManager.Config.TrackUserGroups.Contains(id)))
+            if (clientInfo.ServerGroupIds.Any(id =>
+             configManager.Config.TrackIgnoreUserGroups.Contains(id) ||
+             !configManager.Config.TrackUserGroups.Contains(id)))
             {
                 return false;
             }
@@ -281,7 +283,7 @@ namespace TeamspeakActivityBot
             // Ignore user if idle is longer than threshold
             var conditionIdleTIme = clientInfo.IdleTime < configManager.Config.TrackMaxIdleTime;
 
-            if (conditionNotAway && conditionNotMuted && 
+            if (conditionNotAway && conditionNotMuted &&
                 conditionIdleTIme && conditionNotInIgnoredChannel)
             {
                 client.ActiveTime += calculatedTime;
