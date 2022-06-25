@@ -38,7 +38,7 @@ namespace TeamspeakActivityBot.Helper
             {
                 using var fStream = this.jsonFile.OpenWrite();
                 using var writer = new StreamWriter(fStream);
-                writer.Write(JsonConvert.SerializeObject(_data));
+                writer.Write(JsonConvert.SerializeObject(_data, Formatting.Indented));
             }
         }
 
