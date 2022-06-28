@@ -223,6 +223,7 @@ namespace TeamspeakActivityBot
             bool anyChange = false;
 
             // We want to pass all users here, because the function handles if the user is untracked etc.
+            // TODO: Fix tracking clients multiple times if they are connected in multiple instances
             var clients = await this.queryClient.GetFullClientsDetailedInfo();
 
             foreach (var ci in clients)
