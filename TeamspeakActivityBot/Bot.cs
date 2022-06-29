@@ -88,7 +88,7 @@ namespace TeamspeakActivityBot
             var lastUserStatsUpdate = DateTime.Now;
             var lastChannelUpdate = DateTime.MinValue;
 
-
+            // TODO: Add logic to handle connectionloss and reconnect
             Console.WriteLine("[Press any key to exit]");
             while (!Console.KeyAvailable)
             {
