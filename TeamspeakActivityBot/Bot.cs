@@ -52,18 +52,18 @@ namespace TeamspeakActivityBot
 
         public async Task Run()
         {
-            // Get all connected clients
-            this.queryClient = await GetConnectedClient();
-            this.queryClientInfo = await queryClient.WhoAmI();
 
-            var lastUserStatsUpdate = DateTime.Now;
-            var lastChannelUpdate = DateTime.MinValue;
-
+            LogHelper.LogUpdate("Starting bot...");
             LogHelper.LogUpdate("Activated features:");
             LogHelper.LogUpdate($" - TrackClientActiveTimes: {configManager.Config.TrackClientActiveTimes}");
             LogHelper.LogUpdate($" - TrackClientConnectedTimes: {configManager.Config.TrackClientConnectedTimes}");
             LogHelper.LogUpdate($" - TopListUpdateChannel: {configManager.Config.TopListUpdateChannel}");
             LogHelper.LogUpdate($" - EnableChatCommands: {configManager.Config.ChatCommandsEnabled}");
+
+
+            // Get connected client and identity
+            this.queryClient = await GetConnectedClient();
+            this.queryClientInfo = await queryClient.WhoAmI();
 
 
             // If chat commands are enabled, subscribe to updates
@@ -81,6 +81,9 @@ namespace TeamspeakActivityBot
                 queryClient.Subscribe<TextMessage>(HandleServerChatMessages);
             }
 
+
+            var lastUserStatsUpdate = DateTime.Now;
+            var lastChannelUpdate = DateTime.MinValue;
 
             while (!Console.KeyAvailable)
             {
