@@ -1,4 +1,5 @@
-﻿using Sentry;
+﻿using NLog;
+using Sentry;
 using Sentry.Infrastructure;
 using System;
 using System.IO;
@@ -12,6 +13,8 @@ namespace TeamspeakActivityBot
     {
         private static string CLIENTS_FILE = Path.Combine(Environment.CurrentDirectory, "clients.json");
         private static string CONFIG_FILE = Path.Combine(Environment.CurrentDirectory, "config.json");
+
+        private static Logger Logger = LogManager.GetCurrentClassLogger();
 
         private static UserManager ClientManager;
         private static ConfigManager ConfigManager;
@@ -35,7 +38,7 @@ namespace TeamspeakActivityBot
 
 
             // Initiate config
-            LogHelper.LogUpdate("Loading config");
+            Logger.Info("Loading config");
             ConfigManager = new ConfigManager(CONFIG_FILE);
 
             // Initialise Sentry, then do the rest
@@ -66,7 +69,6 @@ namespace TeamspeakActivityBot
 
                 try
                 {
-                    LogHelper.LogUpdate("[Press any key to exit]");
                     ClientManager = new UserManager(CLIENTS_FILE);
                     var bot = new Bot(ClientManager, ConfigManager);
                     bot.Run().Wait();
@@ -76,7 +78,7 @@ namespace TeamspeakActivityBot
                     HandleException(ex);
                 }
 
-                LogHelper.LogUpdate("Done.");
+                Logger.Info("Done.");
                 return;
             }
         }
@@ -84,7 +86,7 @@ namespace TeamspeakActivityBot
 
         static void DomainUnhandledExceptionHandler(object sender, UnhandledExceptionEventArgs args)
         {
-            LogHelper.LogError($"Runtime terminating: {args.IsTerminating}");
+            Logger.Error($"Unhandled exception! - Runtime terminating: {args.IsTerminating}");
             Exception e = (Exception)args.ExceptionObject;
             HandleException(e);
         }
@@ -94,10 +96,11 @@ namespace TeamspeakActivityBot
             int depth = 0;
             do
             {
-                Console.WriteLine("Exception #{0}: {1}", ++depth, ex.Message);
+                Logger.Error(ex, $"Exception #{++depth}: {ex.Message}");
                 if (ex.GetType() == typeof(QueryException))
-                    Console.WriteLine("Error: {0}", ((QueryException)ex).Error.Message);
-                Console.WriteLine("Stacktrace: {0}", ex.StackTrace);
+                    Logger.Error(((QueryException)ex).Error.Message);
+                Logger.Error($"Stacktrace: {ex.StackTrace}");
+
                 Console.WriteLine("===========================================");
                 SentrySdk.CaptureException(ex);
             } while ((ex = ex.InnerException) != null);

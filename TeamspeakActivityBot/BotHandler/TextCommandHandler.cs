@@ -1,4 +1,5 @@
-﻿using System;
+﻿using NLog;
+using System;
 using System.Linq;
 using System.Threading.Tasks;
 using TeamSpeak3QueryApi.Net.Specialized;
@@ -13,6 +14,8 @@ namespace TeamspeakActivityBot.BotHandler
 {
     public class TextCommandHandler
     {
+        private static Logger Logger = LogManager.GetCurrentClassLogger();
+
         public static async Task HandleMessage(TextMessage msg, TeamSpeakClient queryClient, ConfigManager configManager, UserManager userManager)
         {
             // TODO: Add dynamic commands / adding text returning commands via command
@@ -21,7 +24,9 @@ namespace TeamspeakActivityBot.BotHandler
 
             var command = GetCommandFromMessage(msg);
 
-            LogHelper.LogUpdate($"Starting {command.Command} - {msg.InvokerName}");
+
+
+            Logger.Info($"Starting {command.Command} - {msg.InvokerName}");
 
             var message = string.Empty;
 
@@ -143,7 +148,7 @@ namespace TeamspeakActivityBot.BotHandler
                     break;
             }
 
-            LogHelper.LogUpdate($"Finished {command.Command} - {msg.InvokerName} -> {message}");
+            Logger.Info($"Finished {command.Command} - {msg.InvokerName} -> {message}");
             await queryClient.SendGlobalMessage($"@{msg.InvokerName} - {message}");
         }
 

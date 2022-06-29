@@ -1,10 +1,13 @@
-﻿using TeamspeakActivityBot.Helper;
+﻿using NLog;
+using TeamspeakActivityBot.Helper;
 using TeamspeakActivityBot.Model;
 
 namespace TeamspeakActivityBot.Manager
 {
     public class ConfigManager
     {
+        private static Logger Logger = LogManager.GetCurrentClassLogger();
+
         public Config Config => configFile.Data;
         private JsonFile<Config> configFile;
 
@@ -24,30 +27,30 @@ namespace TeamspeakActivityBot.Manager
         /// <returns>returns true if config is valid</returns>
         public bool ValidateConfig()
         {
-            LogHelper.LogUpdate("Validating config");
+            Logger.Info("Validating config");
 
             bool error = false;
             if (this.Config.Host == "")
             {
-                LogHelper.LogError("No Host set!");
+                Logger.Error("No Host set!");
                 error = true;
             }
 
             if (this.Config.HostPort <= 0)
             {
-                LogHelper.LogError("No valid Port set!");
+                Logger.Error("No valid Port set!");
                 error = true;
             }
 
             if (this.Config.QueryUsername == "")
             {
-                LogHelper.LogError("No QueryUsername set!");
+                Logger.Error("No QueryUsername set!");
                 error = true;
             }
 
             if (this.Config.QueryPassword == "")
             {
-                LogHelper.LogError("No QueryPassword set!");
+                Logger.Error("No QueryPassword set!");
                 error = true;
             }
 
@@ -56,29 +59,29 @@ namespace TeamspeakActivityBot.Manager
             {
                 if (this.Config.TopListChannelId <= 0)
                 {
-                    LogHelper.LogError("No valid TopListChannelId set!");
+                    Logger.Error("No valid TopListChannelId set!");
                     error = true;
                 }
 
                 if (!this.Config.TopListChannelNameFormat.Contains("%NAME%"))
                 {
-                    LogHelper.LogError("No Wildcard '%NAME%' in 'TopListChannelNameFormat found!");
+                    Logger.Error("No Wildcard '%NAME%' in 'TopListChannelNameFormat found!");
                     error = true;
                 }
             }
 
             if (this.Config.SentryDsn != "")
             {
-                LogHelper.LogUpdate($"Using Sentry DSN: {this.Config.SentryDsn}");
+                Logger.Info($"Using Sentry");
             }
 
             if (error)
             {
-                LogHelper.LogError("Config is not valid. Terminating.");
+                Logger.Error("Config is not valid. Terminating.");
                 return !error;
             }
 
-            LogHelper.LogUpdate("Config validated");
+            Logger.Info("Config validated");
 
             return !error;
         }

@@ -1,4 +1,5 @@
-﻿using System;
+﻿using NLog;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -17,6 +18,8 @@ namespace TeamspeakActivityBot
     {
         private static readonly TimeSpan WW2DURATION = (new DateTime(1945, 9, 2) - new DateTime(1939, 9, 1));
         private const int MAX_CHANNEL_NAME_LENGTH = 40;
+
+        private static Logger Logger = LogManager.GetCurrentClassLogger();
 
         private UserManager userManager;
 
@@ -53,12 +56,12 @@ namespace TeamspeakActivityBot
         public async Task Run()
         {
 
-            LogHelper.LogUpdate("Starting bot...");
-            LogHelper.LogUpdate("Activated features:");
-            LogHelper.LogUpdate($" - TrackClientActiveTimes: {configManager.Config.TrackClientActiveTimes}");
-            LogHelper.LogUpdate($" - TrackClientConnectedTimes: {configManager.Config.TrackClientConnectedTimes}");
-            LogHelper.LogUpdate($" - TopListUpdateChannel: {configManager.Config.TopListUpdateChannel}");
-            LogHelper.LogUpdate($" - EnableChatCommands: {configManager.Config.ChatCommandsEnabled}");
+            Logger.Info("Starting bot...");
+            Logger.Info("Activated features:");
+            Logger.Info($" - TrackClientActiveTimes: {configManager.Config.TrackClientActiveTimes}");
+            Logger.Info($" - TrackClientConnectedTimes: {configManager.Config.TrackClientConnectedTimes}");
+            Logger.Info($" - TopListUpdateChannel: {configManager.Config.TopListUpdateChannel}");
+            Logger.Info($" - EnableChatCommands: {configManager.Config.ChatCommandsEnabled}");
 
 
             // Get connected client and identity
@@ -85,6 +88,8 @@ namespace TeamspeakActivityBot
             var lastUserStatsUpdate = DateTime.Now;
             var lastChannelUpdate = DateTime.MinValue;
 
+
+            Console.WriteLine("[Press any key to exit]");
             while (!Console.KeyAvailable)
             {
                 // Collect ClientTimes after timespan if option is enabled
@@ -117,7 +122,7 @@ namespace TeamspeakActivityBot
             }
             else
             {
-                LogHelper.LogWarning("No Instance configured, fallback to query.");
+                Logger.Warn("No Instance configured, fallback to query.");
                 var availableInstances = (await bot.GetServers()).ToArray();
                 await bot.UseServer(availableInstances.FirstOrDefault().Id);
             }
@@ -129,11 +134,11 @@ namespace TeamspeakActivityBot
         {
             if (!userManager.Users.Any())
             {
-                LogHelper.LogWarning("Couldn't update channel info: no users!");
+                Logger.Warn("Couldn't update channel info: no users!");
                 return;
             }
 
-            LogHelper.LogUpdate("Updating channel info");
+            Logger.Info("Updating channel info");
 
             // Get users ordered DESC by the ActiveTime
             var clients = userManager.Users.ToArray();
@@ -221,14 +226,18 @@ namespace TeamspeakActivityBot
 
         private async Task CollectClientTimes(DateTime lastRun)
         {
-            LogHelper.LogUpdate("Collecting online time");
+            Logger.Info("Collecting online time");
 
             bool anyChange = false;
 
-            // We want to pass all users here, because the function handles if the user is untracked etc.
-            // TODO: Fix tracking clients multiple times if they are connected in multiple instances
-            var clients = await this.queryClient.GetFullClientsDetailedInfo();
+            // Get all full clients
+            var fullClients = await this.queryClient.GetFullClientsDetailedInfo();
 
+            // Filter clients if they are connected in multiple client instances
+            var clients = fullClients.DistinctBy(x => x.DatabaseId);
+
+
+            // We want to pass all users here, because the function handles if the user is untracked etc.
             foreach (var ci in clients)
                 anyChange |= UpdateUserTime(lastRun, ci);
 
