@@ -3,7 +3,6 @@ using Sentry;
 using Sentry.Infrastructure;
 using System;
 using System.IO;
-using TeamSpeak3QueryApi.Net;
 using TeamspeakActivityBot.Helper;
 using TeamspeakActivityBot.Manager;
 
@@ -12,9 +11,14 @@ namespace TeamspeakActivityBot
     class Program
     {
         private static string CLIENTS_FILE = Path.Combine(Environment.CurrentDirectory, "clients.json");
-        private static string CONFIG_FILE = Path.Combine(Environment.CurrentDirectory, "config.json");
 
-        private static Logger Logger = LogManager.GetCurrentClassLogger();
+#if DEBUG
+        private static string CONFIG_FILE = Path.Combine(Environment.CurrentDirectory, "config-dev.json");
+#else
+        private static string CONFIG_FILE = Path.Combine(Environment.CurrentDirectory, "config.json");
+#endif
+
+        private static readonly Logger Logger = LogManager.GetCurrentClassLogger();
 
         private static UserManager ClientManager;
         private static ConfigManager ConfigManager;
@@ -24,17 +28,14 @@ namespace TeamspeakActivityBot
             AppDomain currentDomain = AppDomain.CurrentDomain;
             currentDomain.UnhandledException += new UnhandledExceptionEventHandler(DomainUnhandledExceptionHandler);
 
-#if DEBUG
-            while (!System.Diagnostics.Debugger.IsAttached)
-            {
-                Console.WriteLine("Waiting for Debugger...");
-                System.Threading.Thread.Sleep(1000);
-            }
-            Console.WriteLine("Debugger attached!");
-#endif
 
             // "Draw" TAB logo
             Console.WriteLine(Misc.Memes.Logo);
+            // Print version
+            Logger.Info($"TeamspeakActivityBot says hi - v.{typeof(Program).Assembly.GetName().Version}");
+#if DEBUG
+            Logger.Info("Running in debug mode");
+#endif
 
 
             // Initiate config
@@ -72,13 +73,15 @@ namespace TeamspeakActivityBot
                     ClientManager = new UserManager(CLIENTS_FILE);
                     var bot = new Bot(ClientManager, ConfigManager);
                     bot.Run().Wait();
+                    Logger.Info("Done.");
                 }
                 catch (Exception ex)
                 {
-                    HandleException(ex);
+                    ExceptionHelper.HandleException(ex);
+                    Logger.Error("Terminating...");
+                    Environment.Exit(1);
                 }
 
-                Logger.Info("Done.");
                 return;
             }
         }
@@ -88,23 +91,7 @@ namespace TeamspeakActivityBot
         {
             Logger.Error($"Unhandled exception! - Runtime terminating: {args.IsTerminating}");
             Exception e = (Exception)args.ExceptionObject;
-            HandleException(e);
-        }
-
-        static void HandleException(Exception ex)
-        {
-            int depth = 0;
-            do
-            {
-                Logger.Error(ex, $"Exception #{++depth}: {ex.Message}");
-                if (ex.GetType() == typeof(QueryException))
-                    Logger.Error(((QueryException)ex).Error.Message);
-                Logger.Error($"Stacktrace: {ex.StackTrace}");
-
-                Console.WriteLine("===========================================");
-                SentrySdk.CaptureException(ex);
-            } while ((ex = ex.InnerException) != null);
-
+            ExceptionHelper.HandleException(e);
         }
     }
 }

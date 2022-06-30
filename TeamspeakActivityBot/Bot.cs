@@ -19,15 +19,13 @@ namespace TeamspeakActivityBot
         private static readonly TimeSpan WW2DURATION = (new DateTime(1945, 9, 2) - new DateTime(1939, 9, 1));
         private const int MAX_CHANNEL_NAME_LENGTH = 40;
 
-        private static Logger Logger = LogManager.GetCurrentClassLogger();
+        private static readonly Logger Logger = LogManager.GetCurrentClassLogger();
 
         private UserManager userManager;
 
         private ConfigManager configManager;
 
         private TeamSpeakClient queryClient;
-
-        private WhoAmI queryClientInfo;
 
         public Bot(UserManager cManager, ConfigManager cfgManager)
         {
@@ -41,21 +39,28 @@ namespace TeamspeakActivityBot
             {
                 // Prevent reacting to own messages
 #if DEBUG
-                if (msg.InvokerId == queryClientInfo.OriginServerId || !msg.Message.StartsWith('?'))
+                if (!msg.Message.StartsWith('?'))
 #else
-                if (msg.InvokerId == queryClientInfo.OriginServerId || !msg.Message.StartsWith('!'))
+                if (!msg.Message.StartsWith('!'))
 #endif
                 {
                     continue;
                 }
 
-                await BotHandler.TextCommandHandler.HandleMessage(msg, queryClient, configManager, userManager);
+                try
+                {
+                    await BotHandler.TextCommandHandler.HandleMessage(msg, queryClient, configManager, userManager);
+                }
+                catch(Exception ex)
+                {
+                    Logger.Error($"Command: '{msg.Message}'");
+                    ExceptionHelper.HandleBotException(ex);
+                }
             }
         }
 
         public async Task Run()
         {
-
             Logger.Info("Starting bot...");
             Logger.Info("Activated features:");
             Logger.Info($" - TrackClientActiveTimes: {configManager.Config.TrackClientActiveTimes}");
@@ -63,71 +68,104 @@ namespace TeamspeakActivityBot
             Logger.Info($" - TopListUpdateChannel: {configManager.Config.TopListUpdateChannel}");
             Logger.Info($" - EnableChatCommands: {configManager.Config.ChatCommandsEnabled}");
 
-
-            // Get connected client and identity
-            this.queryClient = await GetConnectedClient();
-            this.queryClientInfo = await queryClient.WhoAmI();
-
-
-            // If chat commands are enabled, subscribe to updates
-            // Those only work in global chat tho
-            if (this.configManager.Config.ChatCommandsEnabled)
-            {
-                // register server wide text notifications
-                await this.queryClient.RegisterTextServerNotification();
-
-                // Here would be code to register all channels, but this
-                // is not really possible, because the queryClient has to be
-                // in the channel to get the notification
-                // await queryClient.RegisterTextChannelNotification();
-
-                queryClient.Subscribe<TextMessage>(HandleServerChatMessages);
-            }
-
-
-            var lastUserStatsUpdate = DateTime.Now;
-            var lastChannelUpdate = DateTime.MinValue;
-
-            // TODO: Add logic to handle connectionloss and reconnect
+            // Main loop, restart client on connection loss
             Console.WriteLine("[Press any key to exit]");
-            while (!Console.KeyAvailable)
+            while (true && !Console.KeyAvailable)
             {
-                // Collect ClientTimes after timespan if option is enabled
-                if (DateTime.Now - lastUserStatsUpdate >= configManager.Config.TrackTimeLogInterval && configManager.Config.TrackClientTimes)
+                try
                 {
-                    await CollectClientTimes(lastUserStatsUpdate);
-                    lastUserStatsUpdate = DateTime.Now;
+                    // Get connected client and identity
+                    this.queryClient = await GetConnectedClient();
+
+                    if (!this.queryClient.Client.IsConnected || (await this.queryClient.WhoAmI()).VirtualServerStatus == "unknown")
+                    {
+                        Logger.Warn("Could not connect, retrying in 15s");
+                        this.queryClient.Dispose();
+                        await Task.Delay(TimeSpan.FromSeconds(15));
+                        continue;
+                    }
+
+                    await this.queryClient.ChangeNickName(configManager.Config.BotName);
+
+                    // If chat commands are enabled, subscribe to updates
+                    // Those only work in global chat tho
+                    if (this.configManager.Config.ChatCommandsEnabled)
+                    {
+                        // register server wide text notifications
+                        await this.queryClient.RegisterTextServerNotification();
+
+                        // Here would be code to register all channels, but this
+                        // is not possible, because the queryClient has to be
+                        // in the channel to get the notification
+                        // await queryClient.RegisterTextChannelNotification();
+
+                        queryClient.Subscribe<TextMessage>(HandleServerChatMessages);
+                    }
+
+                    var lastUserStatsUpdate = DateTime.Now;
+                    var lastChannelUpdate = DateTime.Now;
+
+                    // TODO: Add logic to handle connectionloss and reconnect
+                    while (!Console.KeyAvailable)
+                    {
+                        // Collect ClientTimes after timespan if option is enabled
+                        if (DateTime.Now - lastUserStatsUpdate >= configManager.Config.TrackTimeLogInterval && configManager.Config.TrackClientTimes)
+                        {
+                            await CollectClientTimes(lastUserStatsUpdate);
+                            lastUserStatsUpdate = DateTime.Now;
+                        }
+                        // Update the TopListChannel with toplist in description and MVP in channel name
+                        if (DateTime.Now - lastChannelUpdate >= configManager.Config.TopListChannelUpdateInterval && configManager.Config.TopListUpdateChannel)
+                        {
+                            await UpdateTopListChannel();
+                            lastChannelUpdate = DateTime.Now;
+                        }
+                        await Task.Delay(TimeSpan.FromSeconds(1));
+                    }
                 }
-                // Update the TopListChannel with toplist in description and MVP in channel name
-                if (DateTime.Now - lastChannelUpdate >= configManager.Config.TopListChannelUpdateInterval && configManager.Config.TopListUpdateChannel)
+                catch (Exception ex)
                 {
-                    await UpdateTopListChannel();
-                    lastChannelUpdate = DateTime.Now;
+                    ExceptionHelper.HandleBotException(ex);
+                    continue;
                 }
-                await Task.Delay(TimeSpan.FromSeconds(1));
+
+                return;
             }
         }
 
         private async Task<TeamSpeakClient> GetConnectedClient()
         {
-            // Create the actual client, connect, login and choose default instance
-            var bot = new TeamSpeakClient(configManager.Config.Host, configManager.Config.HostPort);
-            await bot.Connect();
-            await bot.Login(configManager.Config.QueryUsername, configManager.Config.QueryPassword);
+            // Create the actual client, connect, login to the server
+            var bot = new TeamSpeakClient(configManager.Config.Host, configManager.Config.HostPort, TimeSpan.FromMinutes(1));
 
-            // Default fresh installed Server Instance is 1, but we query it from the server because it might be not 1
-            if (configManager.Config.QueryInstanceId != 0)
+            try
             {
-                await bot.UseServer(configManager.Config.QueryInstanceId);
+                // Connect client to server
+                // Errors produced here are from server
+                await bot.Connect();
+                await bot.Login(configManager.Config.QueryUsername, configManager.Config.QueryPassword);
+
+                // Choose instance to connect
+                // Default fresh installed Server Instance is 1, but we query it from the server because it might be not 1
+                // Errors produced after here are probably instance related, but could be server related
+                if (configManager.Config.QueryInstanceId != 0)
+                {
+                    await bot.UseServer(configManager.Config.QueryInstanceId);
+                }
+                else
+                {
+                    Logger.Warn("No Instance configured, fallback to query.");
+                    var availableInstances = (await bot.GetServers()).ToArray();
+                    await bot.UseServer(availableInstances.FirstOrDefault().Id);
+                }
             }
-            else
+            catch (Exception ex)
             {
-                Logger.Warn("No Instance configured, fallback to query.");
-                var availableInstances = (await bot.GetServers()).ToArray();
-                await bot.UseServer(availableInstances.FirstOrDefault().Id);
+                ExceptionHelper.HandleBotException(ex);
             }
 
             return bot;
+
         }
 
         private async Task UpdateTopListChannel()
@@ -160,7 +198,7 @@ namespace TeamspeakActivityBot
             var sb = new StringBuilder();
             sb.AppendLine($"Seit {configManager.Config.TrackLoggingSince}:");
 
-            // TODO: Only select first 10(?) users
+            // Only select first 10 users
             // Format for TopUsers
             var clientsActiveTime = clients.OrderByDescending(x => x.ActiveTime).Take(10).ToArray();
 
@@ -287,11 +325,12 @@ namespace TeamspeakActivityBot
             // Check if user is in an ignored channel (afk, default connect channel)
             var conditionNotInIgnoredChannel = !configManager.Config.TrackIgnoreChannels.Contains(clientInfo.ChannelId);
 
+
             // Ignore user if afk
-            var conditionNotAway = !clientInfo.Away && !configManager.Config.TrackAFK;
+            var conditionNotAway = !clientInfo.Away || configManager.Config.TrackAFK;
 
             // Ignore user if muted
-            var conditionNotMuted = !clientInfo.IsInputOrOutputMuted() && !configManager.Config.TrackOutputMuted;
+            var conditionNotMuted = !clientInfo.IsInputOrOutputMuted() || configManager.Config.TrackOutputMuted;
 
             // Ignore user if idle is longer than threshold
             var conditionIdleTIme = clientInfo.IdleTime < configManager.Config.TrackMaxIdleTime;

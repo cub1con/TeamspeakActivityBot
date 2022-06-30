@@ -54,6 +54,12 @@ namespace TeamspeakActivityBot.Manager
                 error = true;
             }
 
+            if (string.IsNullOrWhiteSpace(this.Config.BotName))
+            {
+                Logger.Error("No BotName set!");
+                error = true;
+            }
+
             // Only validate options if feature is enabled
             if (this.Config.TopListUpdateChannel)
             {
@@ -84,6 +90,11 @@ namespace TeamspeakActivityBot.Manager
             Logger.Info("Config validated");
 
             return !error;
+        }
+
+        public void Load()
+        {
+            this.configFile.Read();
         }
     }
 }

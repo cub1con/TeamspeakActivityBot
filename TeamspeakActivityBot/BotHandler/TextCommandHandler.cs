@@ -6,7 +6,6 @@ using TeamSpeak3QueryApi.Net.Specialized;
 using TeamSpeak3QueryApi.Net.Specialized.Notifications;
 using TeamSpeak3QueryApi.Net.Specialized.Responses;
 using TeamspeakActivityBot.Extensions;
-using TeamspeakActivityBot.Helper;
 using TeamspeakActivityBot.Manager;
 using TeamspeakActivityBot.Model;
 
@@ -23,7 +22,6 @@ namespace TeamspeakActivityBot.BotHandler
             // TODO: Make commands more dynamic
 
             var command = GetCommandFromMessage(msg);
-
 
 
             Logger.Info($"Starting {command.Command} - {msg.InvokerName}");
@@ -107,7 +105,7 @@ namespace TeamspeakActivityBot.BotHandler
                         break;
                     }
 
-                    var clientId = await queryClient.GetUserByID(msg.InvokerId);                    
+                    var clientId = await queryClient.GetUserByID(msg.InvokerId);
 
                     var rankUser = userManager.GetUserById(clientId.DatabaseId);
 
@@ -121,27 +119,54 @@ namespace TeamspeakActivityBot.BotHandler
                     // Get some funky fresh memes
                     message = Misc.Memes.Captions[new Random().Next(0, Misc.Memes.Captions.Length - 1)];
                     break;
+
                 case "hm":
                 case "hmm":
                 case "shrug":
                     message = @"¯\_(ツ)_/¯";
                     break;
+
                 case "tf":
                 case "tableflip":
                     message = @"(╯°□°）╯︵ ┻━┻";
                     break;
+
                 case "uf":
                 case "unflip":
                     message = @"┬─┬ ノ( ゜-゜ノ)";
                     break;
+
+                case "continue": // Easteregg for LW
+                    message = "Stepcode i'm stuck!";
+                    break;
+
                 case "help":
                     message = "Available Commands:\n"
+                            + "!continue - show next help page\n"
                             + "!kick [random/r, Optional Username] - kicks you, a random, or specified user\n"
                             + "!meme(s) - Get some funky fresh memes!\n!help - You know.\n + "
                             + "!rank - Returns your current timerank (if time tracking is enabled)\n"
+                            + "!reloadconfig - Reload current config file\n"
                             + "!roll [Optional number] - Rolls a dice with six sides [Rolls with x sides]\n"
+                            + "!saveconfig - Save current config file\n"
                             + "!shrug, !tableflip, !unflip - shrug and flip!";
                     break;
+
+                case "reloadconfig":
+                    configManager.Load();
+                    message = "Successfully reloaded config";
+                    break;
+
+                case "saveconfig":
+                    configManager.Save();
+                    message = "Successfully saved config";
+                    break;
+
+#if DEBUG
+                // Dedicated command to test crashing
+                case "crashme":
+                    throw new Exception("crashme Command!");
+#endif
 
                 default:
                     message = $"Command not found!";
@@ -149,7 +174,7 @@ namespace TeamspeakActivityBot.BotHandler
             }
 
             Logger.Info($"Finished {command.Command} - {msg.InvokerName} -> {message}");
-            await queryClient.SendGlobalMessage($"@{msg.InvokerName} - {message}");
+            await queryClient.SendMessage($"@{msg.InvokerName} - {message}", msg.TargetMode, msg.TargetClientId);
         }
 
         private static TextCommand GetCommandFromMessage(TextMessage msg)
