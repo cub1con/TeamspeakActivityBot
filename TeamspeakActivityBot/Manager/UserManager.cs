@@ -35,6 +35,9 @@ namespace TeamspeakActivityBot.Manager
 
         public User GetUser(GetClientDetailedInfo clientInfo)
         {
+            if(clientInfo == null) 
+                return null;
+
             var client = this[clientInfo.DatabaseId];
             if (client == null)
             {

@@ -18,7 +18,7 @@ namespace TeamspeakActivityBot
         private static string CONFIG_FILE = Path.Combine(Environment.CurrentDirectory, "config.json");
 #endif
 
-        private static Logger Logger = LogManager.GetCurrentClassLogger();
+        private static readonly Logger Logger = LogManager.GetCurrentClassLogger();
 
         private static UserManager ClientManager;
         private static ConfigManager ConfigManager;
@@ -28,14 +28,6 @@ namespace TeamspeakActivityBot
             AppDomain currentDomain = AppDomain.CurrentDomain;
             currentDomain.UnhandledException += new UnhandledExceptionEventHandler(DomainUnhandledExceptionHandler);
 
-#if DEBUG
-            while (!System.Diagnostics.Debugger.IsAttached)
-            {
-                Console.WriteLine("Waiting for Debugger...");
-                System.Threading.Thread.Sleep(1000);
-            }
-            Console.WriteLine("Debugger attached!");
-#endif
 
             // "Draw" TAB logo
             Console.WriteLine(Misc.Memes.Logo);
