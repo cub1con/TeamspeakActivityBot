@@ -24,7 +24,6 @@ namespace TeamspeakActivityBot.BotHandler
             var command = GetCommandFromMessage(msg);
 
 
-
             Logger.Info($"Starting {command.Command} - {msg.InvokerName}");
 
             var message = string.Empty;
@@ -120,21 +119,30 @@ namespace TeamspeakActivityBot.BotHandler
                     // Get some funky fresh memes
                     message = Misc.Memes.Captions[new Random().Next(0, Misc.Memes.Captions.Length - 1)];
                     break;
+
                 case "hm":
                 case "hmm":
                 case "shrug":
                     message = @"¯\_(ツ)_/¯";
                     break;
+
                 case "tf":
                 case "tableflip":
                     message = @"(╯°□°）╯︵ ┻━┻";
                     break;
+
                 case "uf":
                 case "unflip":
                     message = @"┬─┬ ノ( ゜-゜ノ)";
                     break;
+
+                case "continue": // Easteregg for LW
+                    message = "Stepcode i'm stuck!";
+                    break;
+
                 case "help":
                     message = "Available Commands:\n"
+                            + "!continue - show next help page\n"
                             + "!kick [random/r, Optional Username] - kicks you, a random, or specified user\n"
                             + "!meme(s) - Get some funky fresh memes!\n!help - You know.\n + "
                             + "!rank - Returns your current timerank (if time tracking is enabled)\n"
@@ -143,6 +151,7 @@ namespace TeamspeakActivityBot.BotHandler
                             + "!saveconfig - Save current config file\n"
                             + "!shrug, !tableflip, !unflip - shrug and flip!";
                     break;
+
                 case "reloadconfig":
                     configManager.Load();
                     message = "Successfully reloaded config";
