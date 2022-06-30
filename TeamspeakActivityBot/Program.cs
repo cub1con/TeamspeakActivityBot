@@ -33,6 +33,9 @@ namespace TeamspeakActivityBot
             Console.WriteLine(Misc.Memes.Logo);
             // Print version
             Logger.Info($"TeamspeakActivityBot says hi - v.{typeof(Program).Assembly.GetName().Version}");
+#if DEBUG
+            Logger.Info("Running in debug mode");
+#endif
 
 
             // Initiate config
