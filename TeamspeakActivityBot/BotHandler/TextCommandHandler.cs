@@ -138,8 +138,19 @@ namespace TeamspeakActivityBot.BotHandler
                             + "!kick [random/r, Optional Username] - kicks you, a random, or specified user\n"
                             + "!meme(s) - Get some funky fresh memes!\n!help - You know.\n + "
                             + "!rank - Returns your current timerank (if time tracking is enabled)\n"
+                            + "!reloadconfig - Reload current config file\n"
                             + "!roll [Optional number] - Rolls a dice with six sides [Rolls with x sides]\n"
+                            + "!saveconfig - Save current config file\n"
                             + "!shrug, !tableflip, !unflip - shrug and flip!";
+                    break;
+                case "reloadconfig":
+                    configManager.Load();
+                    message = "Successfully reloaded config";
+                    break;
+
+                case "saveconfig":
+                    configManager.Save();
+                    message = "Successfully saved config";
                     break;
 
 #if DEBUG

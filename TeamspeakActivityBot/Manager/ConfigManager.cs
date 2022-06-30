@@ -91,5 +91,10 @@ namespace TeamspeakActivityBot.Manager
 
             return !error;
         }
+
+        public void Load()
+        {
+            this.configFile.Read();
+        }
     }
 }
