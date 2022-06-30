@@ -6,7 +6,6 @@ using TeamSpeak3QueryApi.Net.Specialized;
 using TeamSpeak3QueryApi.Net.Specialized.Notifications;
 using TeamSpeak3QueryApi.Net.Specialized.Responses;
 using TeamspeakActivityBot.Extensions;
-using TeamspeakActivityBot.Helper;
 using TeamspeakActivityBot.Manager;
 using TeamspeakActivityBot.Model;
 
@@ -107,7 +106,7 @@ namespace TeamspeakActivityBot.BotHandler
                         break;
                     }
 
-                    var clientId = await queryClient.GetUserByID(msg.InvokerId);                    
+                    var clientId = await queryClient.GetUserByID(msg.InvokerId);
 
                     var rankUser = userManager.GetUserById(clientId.DatabaseId);
 
@@ -142,6 +141,12 @@ namespace TeamspeakActivityBot.BotHandler
                             + "!roll [Optional number] - Rolls a dice with six sides [Rolls with x sides]\n"
                             + "!shrug, !tableflip, !unflip - shrug and flip!";
                     break;
+
+#if DEBUG
+                // Dedicated command to test crashing
+                case "crashme":
+                    throw new Exception("crashme Command!");
+#endif
 
                 default:
                     message = $"Command not found!";
