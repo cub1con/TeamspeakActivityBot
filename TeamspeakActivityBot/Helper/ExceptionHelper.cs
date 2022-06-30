@@ -1,5 +1,5 @@
-﻿using System;
-using Sentry;
+﻿using Sentry;
+using System;
 
 namespace TeamspeakActivityBot.Helper
 {
@@ -32,7 +32,7 @@ namespace TeamspeakActivityBot.Helper
                 case TeamSpeak3QueryApi.Net.QueryException:
                     var querryEx = (TeamSpeak3QueryApi.Net.QueryException)ex;
                     logger.Error(querryEx);
-                    if(querryEx.Error != null)
+                    if (querryEx.Error != null)
                     {
                         logger.Error(querryEx.Error.Message);
                         if (querryEx.Error.Message.ToLower() == ("invalid serverid"))
