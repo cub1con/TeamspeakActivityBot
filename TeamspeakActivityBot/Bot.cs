@@ -41,13 +41,14 @@ namespace TeamspeakActivityBot
             {
                 // Prevent reacting to own messages
 #if DEBUG
-                if (msg.InvokerId == queryClientInfo.OriginServerId || !msg.Message.StartsWith('?'))
+                if (!msg.Message.StartsWith('?'))
 #else
-                if (msg.InvokerId == queryClientInfo.OriginServerId || !msg.Message.StartsWith('!'))
+                if (!msg.Message.StartsWith('!'))
 #endif
                 {
                     continue;
                 }
+
                 try
                 {
                     await BotHandler.TextCommandHandler.HandleMessage(msg, queryClient, configManager, userManager);
