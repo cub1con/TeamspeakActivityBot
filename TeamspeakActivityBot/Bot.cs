@@ -27,8 +27,6 @@ namespace TeamspeakActivityBot
 
         private TeamSpeakClient queryClient;
 
-        private WhoAmI queryClientInfo;
-
         public Bot(UserManager cManager, ConfigManager cfgManager)
         {
             this.userManager = cManager;
@@ -74,21 +72,21 @@ namespace TeamspeakActivityBot
             Console.WriteLine("[Press any key to exit]");
             while (true && !Console.KeyAvailable)
             {
-                // Get connected client and identity
-                this.queryClient = await GetConnectedClient();
-                this.queryClientInfo = await queryClient.WhoAmI();
-                await this.queryClient.ChangeNickName("TeamspeakActivityBot");
-                if (queryClientInfo.VirtualServerStatus == "unknown")
-                {
-                    Logger.Warn("Could not connect, retrying in 15s");
-                    this.queryClient.Dispose();
-                    this.queryClientInfo = null;
-                    await Task.Delay(TimeSpan.FromSeconds(15));
-                    continue;
-                }
-
                 try
                 {
+                    // Get connected client and identity
+                    this.queryClient = await GetConnectedClient();
+
+                    if (!this.queryClient.Client.IsConnected || (await this.queryClient.WhoAmI()).VirtualServerStatus == "unknown")
+                    {
+                        Logger.Warn("Could not connect, retrying in 15s");
+                        this.queryClient.Dispose();
+                        await Task.Delay(TimeSpan.FromSeconds(15));
+                        continue;
+                    }
+
+                    await this.queryClient.ChangeNickName(configManager.Config.BotName);
+
                     // If chat commands are enabled, subscribe to updates
                     // Those only work in global chat tho
                     if (this.configManager.Config.ChatCommandsEnabled)

@@ -11,6 +11,9 @@ namespace TeamspeakActivityBot.Model
         public string QueryPassword { get; set; }
         public int QueryInstanceId { get; set; }
 
+        // The displayname in chat and interactions
+        public string BotName { get; set; }
+
 
         // Client time tracking
         [JsonIgnore]
@@ -46,6 +49,8 @@ namespace TeamspeakActivityBot.Model
             QueryUsername = "";
             QueryPassword = "";
             QueryInstanceId = 0;
+
+            BotName = "TeamspeakActivityBot";
 
             // Time collection
             TrackClientActiveTimes = true;
