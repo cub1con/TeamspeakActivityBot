@@ -31,6 +31,8 @@ namespace TeamspeakActivityBot
 
             // "Draw" TAB logo
             Console.WriteLine(Misc.Memes.Logo);
+            // Print version
+            Logger.Info($"TeamspeakActivityBot says hi - v.{typeof(Program).Assembly.GetName().Version}");
 
 
             // Initiate config
