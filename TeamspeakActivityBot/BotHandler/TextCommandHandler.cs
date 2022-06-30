@@ -154,7 +154,7 @@ namespace TeamspeakActivityBot.BotHandler
             }
 
             Logger.Info($"Finished {command.Command} - {msg.InvokerName} -> {message}");
-            await queryClient.SendGlobalMessage($"@{msg.InvokerName} - {message}");
+            await queryClient.SendMessage($"@{msg.InvokerName} - {message}", msg.TargetMode, msg.TargetClientId);
         }
 
         private static TextCommand GetCommandFromMessage(TextMessage msg)
