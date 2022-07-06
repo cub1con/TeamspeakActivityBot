@@ -180,15 +180,21 @@ namespace TeamspeakActivityBot
 
             // Get users ordered DESC by the ActiveTime
             var clients = userManager.Users.ToArray();
+
+            // Get topListChannel info
+            var topListChannelInfo = await this.queryClient.GetChannelInfo(configManager.Config.TopListChannelId);
+
+
+            // Get the channel leaderboard
+            var newChannelDescription = FormatChannelDescription(clients);
+            // Only update the channel if there is a difference
+            if (topListChannelInfo.Description != newChannelDescription)
+                await this.queryClient.EditChannel(configManager.Config.TopListChannelId, ChannelEdit.channel_description, newChannelDescription);
+
+            // Get new channel name
             var channelName = FormatChannelName(clients.OrderByDescending(x => x.ActiveTime).FirstOrDefault());
-
-            // Create the channel top list description
-            var description = FormatChannelDescription(clients);
-            await this.queryClient.EditChannel(configManager.Config.TopListChannelId, ChannelEdit.channel_description, description);
-
             // Update channel name with mvp, if name is not identical
-            var channelInfo = await this.queryClient.GetChannelInfo(configManager.Config.TopListChannelId);
-            if (channelInfo.Name != channelName)
+            if (topListChannelInfo.Name != channelName)
                 await this.queryClient.EditChannel(configManager.Config.TopListChannelId, ChannelEdit.channel_name, channelName);
         }
 
