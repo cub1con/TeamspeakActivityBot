@@ -103,7 +103,7 @@ namespace TeamspeakActivityBot
                     }
 
                     var lastUserStatsUpdate = DateTime.Now;
-                    var lastChannelUpdate = DateTime.Now;
+                    var lastChannelUpdate = DateTime.MinValue;
 
                     // TODO: Add logic to handle connectionloss and reconnect
                     while (!Console.KeyAvailable)
