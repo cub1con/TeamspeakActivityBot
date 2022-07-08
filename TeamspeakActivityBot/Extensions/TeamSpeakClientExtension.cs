@@ -34,7 +34,7 @@ namespace TeamspeakActivityBot.Extensions
             return (await client.GetFullClients()).FirstOrDefault(x => x.DatabaseId == id);
         }
 
-        public static async Task<List<GetClientDetailedInfo>> GetFilteredClients(this TeamSpeakClient client, ConfigManager configManager)
+        public static async Task<List<GetClientDetailedInfo>> GetFilteredClients(this TeamSpeakClient client)
         {
             var returnList = new List<GetClientDetailedInfo>();
 
@@ -42,19 +42,19 @@ namespace TeamspeakActivityBot.Extensions
             foreach (var cl in await client.GetFullClientsDetailedInfo())
             {
                 // Check if User is in an ignored group, break
-                if (cl.ServerGroupIds.Any(id => configManager.Config.TrackIgnoreUserGroups.Contains(id)))
+                if (cl.ServerGroupIds.Any(id => ConfigManager.Config.TrackIgnoreUserGroups.Contains(id)))
                 {
                     continue;
                 }
 
                 // Check if User is in an Tracked group, continue
-                if (!cl.ServerGroupIds.Any(id => configManager.Config.TrackUserGroups.Contains(id)))
+                if (!cl.ServerGroupIds.Any(id => ConfigManager.Config.TrackUserGroups.Contains(id)))
                 {
                     continue;
                 }
 
                 // Check if User is in an ignored channel, break
-                if (configManager.Config.TrackIgnoreChannels.Contains(cl.ChannelId))
+                if (ConfigManager.Config.TrackIgnoreChannels.Contains(cl.ChannelId))
                 {
                     continue;
                 }

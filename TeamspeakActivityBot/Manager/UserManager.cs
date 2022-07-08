@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using TeamSpeak3QueryApi.Net.Specialized.Responses;
 using TeamspeakActivityBot.Helper;
@@ -7,41 +8,47 @@ using TeamspeakActivityBot.Model;
 
 namespace TeamspeakActivityBot.Manager
 {
-    public class UserManager
+    public static class UserManager
     {
-        public List<User> Users => userFile.Data;
-        private JsonFile<List<User>> userFile { get; set; }
+        private static string CLIENTS_FILE = Path.Combine(Environment.CurrentDirectory, "clients.json");
 
-        public UserManager(string file)
+        public static List<User> Users => userFile?.Data ?? (userFile = LoadUsers()).Data;
+        private static JsonFile<List<User>> userFile { get; set; }
+
+        private static JsonFile<List<User>> LoadUsers()
         {
-            this.userFile = new JsonFile<List<User>>(file);
+            userFile = new JsonFile<List<User>>(CLIENTS_FILE);
+            return userFile;
         }
 
-        public User this[int id] => HasClient(id) ? this.Users.First(x => x.Id == id) : null;
-
-        public bool HasClient(int id) { return this.Users.Select(x => x.Id).Contains(id); }
-
-        private User AddUser(User client)
+        public static User User(int id)
         {
-            this.Users.Add(client);
-            this.Save();
+            return HasClient(id) ? Users.First(x => x.Id == id) : null;
+        }
+
+        public static bool HasClient(int id) { return Users.Select(x => x.Id).Contains(id); }
+
+        private static User AddUser(User client)
+        {
+            Users.Add(client);
+            Save();
             return client;
         }
 
-        public void Save()
+        public static void Save()
         {
             userFile.Save();
         }
 
-        public User GetUser(GetClientDetailedInfo clientInfo)
+        public static User GetUser(GetClientDetailedInfo clientInfo)
         {
-            if(clientInfo == null) 
+            if (clientInfo == null)
                 return null;
 
-            var client = this[clientInfo.DatabaseId];
+            var client = User(clientInfo.DatabaseId);
             if (client == null)
             {
-                return this.AddUser(new User()
+                return AddUser(new User()
                 {
                     Id = clientInfo.DatabaseId,
                     DisplayName = clientInfo.NickName,
@@ -55,7 +62,7 @@ namespace TeamspeakActivityBot.Manager
             if (client.DisplayName != clientInfo.NickName)
             {
                 client.DisplayName = clientInfo.NickName;
-                this.Save();
+                Save();
             }
 
             return client;

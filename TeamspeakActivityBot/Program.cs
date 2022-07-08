@@ -2,7 +2,6 @@
 using Sentry;
 using Sentry.Infrastructure;
 using System;
-using System.IO;
 using TeamspeakActivityBot.Helper;
 using TeamspeakActivityBot.Manager;
 
@@ -10,18 +9,7 @@ namespace TeamspeakActivityBot
 {
     class Program
     {
-        private static string CLIENTS_FILE = Path.Combine(Environment.CurrentDirectory, "clients.json");
-
-#if DEBUG
-        private static string CONFIG_FILE = Path.Combine(Environment.CurrentDirectory, "config-dev.json");
-#else
-        private static string CONFIG_FILE = Path.Combine(Environment.CurrentDirectory, "config.json");
-#endif
-
         private static readonly Logger Logger = LogManager.GetCurrentClassLogger();
-
-        private static UserManager ClientManager;
-        private static ConfigManager ConfigManager;
 
         static void Main(string[] args)
         {
@@ -36,11 +24,6 @@ namespace TeamspeakActivityBot
 #if DEBUG
             Logger.Info("Running in debug mode");
 #endif
-
-
-            // Initiate config
-            Logger.Info("Loading config");
-            ConfigManager = new ConfigManager(CONFIG_FILE);
 
             // Initialise Sentry, then do the rest
             using (SentrySdk.Init(o =>
@@ -64,14 +47,15 @@ namespace TeamspeakActivityBot
 #endif
             }))
             {
+                Logger.Info("Loading config");
+                ConfigManager.Load();
                 // Check for valid config and options
                 if (!ConfigManager.ValidateConfig())
                     Environment.Exit(1); // Exit the Application
 
                 try
                 {
-                    ClientManager = new UserManager(CLIENTS_FILE);
-                    var bot = new Bot(ClientManager, ConfigManager);
+                    var bot = new Bot();
                     bot.Run().Wait();
                     Logger.Info("Done.");
                 }
