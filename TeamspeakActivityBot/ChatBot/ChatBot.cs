@@ -65,8 +65,6 @@ namespace TeamspeakActivityBot.ChatBot
                     }
 
                     await queryClient.SendMessage($"@{msg.InvokerName} - {message}", msg.TargetMode, msg.TargetClientId);
-
-                    return;
                 }
                 catch (Exception ex)
                 {
