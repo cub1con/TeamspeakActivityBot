@@ -3,16 +3,17 @@ using System.Linq;
 using System.Threading.Tasks;
 using TeamSpeak3QueryApi.Net.Specialized;
 using TeamspeakActivityBot.ChatBot.Commands.Abstraction;
+using TeamspeakActivityBot.Model;
 
 namespace TeamspeakActivityBot.ChatBot.Commands
 {
-    public class HelpCommand : ChatCommand
+    public class HelpCommand : IChatCommand
     {
         public string[] Name => new string[] { "help" };
 
         public string HelpDescription => "show this text";
 
-        public async Task<string> HandleCommand(TeamSpeakClient queryClient, int invokerId, string arguments)
+        public async Task<string> HandleCommand(TeamSpeakClient queryClient, int invokerId, TextCommand command)
         {
             var message = "Available Commands:\n";
 

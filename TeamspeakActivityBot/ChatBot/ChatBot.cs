@@ -55,7 +55,7 @@ namespace TeamspeakActivityBot.ChatBot
                     if (cmd != null)
                     {
                         Logger.Info($"Starting {cmd.Name} - {msg.InvokerName}");
-                        message = await cmd.HandleCommand(this.queryClient, msg.InvokerId, command.Argument);
+                        message = await cmd.HandleCommand(this.queryClient, msg.InvokerId, command);
                         Logger.Info($"Finished {command.Command} - {msg.InvokerName} -> {message}");
                     }
                     else

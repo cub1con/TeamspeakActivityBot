@@ -24,12 +24,12 @@ namespace TeamspeakActivityBot.ChatBot
         //}
 
 
-        private static List<ChatCommand> commands;
+        private static List<IChatCommand> commands;
 
-        public static IEnumerable<ChatCommand> Commands => commands ?? (commands = LoadCommands());
-        private static List<ChatCommand> LoadCommands()
+        public static IEnumerable<IChatCommand> Commands => commands ?? (commands = LoadCommands());
+        private static List<IChatCommand> LoadCommands()
         {
-            return new List<ChatCommand>()
+            return new List<IChatCommand>()
             {
                 new DiceCommand(),
                 new KickCommand(),

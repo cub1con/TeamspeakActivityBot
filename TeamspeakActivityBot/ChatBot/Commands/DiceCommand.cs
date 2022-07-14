@@ -2,24 +2,25 @@
 using System.Threading.Tasks;
 using TeamSpeak3QueryApi.Net.Specialized;
 using TeamspeakActivityBot.ChatBot.Commands.Abstraction;
+using TeamspeakActivityBot.Model;
 
 namespace TeamspeakActivityBot.ChatBot.Commands
 {
-    public class DiceCommand : ChatCommand
+    public class DiceCommand : IChatCommand
     {
         public string[] Name => new string[] { "dice", "roll" };
 
         public string HelpDescription => "[Optional number] - rolls a dice with six sides [Rolls with x sides]";
 
-        public async Task<string> HandleCommand(TeamSpeakClient queryClient, int invokerId, string arguments)
+        public async Task<string> HandleCommand(TeamSpeakClient queryClient, int invokerId, TextCommand command)
         {
             int maxRoll = 7; // 7 because random will roll BETWEEN not including
 
             // Check for argument, should be a number
-            if (arguments != null)
+            if (command.Argument != null)
             {
                 // TryParse the argument, if not valid, throw error
-                var parsed = int.TryParse(arguments, out maxRoll);
+                var parsed = int.TryParse(command.Argument, out maxRoll);
                 if (!parsed || maxRoll < 1) // Throw divided by zero exception
                 {
                     if (parsed && maxRoll == 0)

@@ -4,16 +4,17 @@ using TeamSpeak3QueryApi.Net.Specialized;
 using TeamspeakActivityBot.ChatBot.Commands.Abstraction;
 using TeamspeakActivityBot.Extensions;
 using TeamspeakActivityBot.Manager;
+using TeamspeakActivityBot.Model;
 
 namespace TeamspeakActivityBot.ChatBot.Commands
 {
-    internal class RankCommand : ChatCommand
+    internal class RankCommand : IChatCommand
     {
         public string[] Name => new string[] { "rank" };
 
         public string HelpDescription => "Returns your current timerank (if time tracking is enabled)";
 
-        public async Task<string> HandleCommand(TeamSpeakClient queryClient, int invokerId, string arguments)
+        public async Task<string> HandleCommand(TeamSpeakClient queryClient, int invokerId, TextCommand command)
         {
             // Get toplist ranking for user
 
