@@ -1,12 +1,12 @@
 ﻿using System.Linq;
 using System.Threading.Tasks;
 using TeamSpeak3QueryApi.Net.Specialized;
-using TeamspeakActivityBot.ChatBot.Commands.Abstraction;
+using TeamspeakActivityBot.Chat.Commands.Abstraction;
 using TeamspeakActivityBot.Extensions;
 using TeamspeakActivityBot.Manager;
 using TeamspeakActivityBot.Model;
 
-namespace TeamspeakActivityBot.ChatBot.Commands
+namespace TeamspeakActivityBot.Chat.Commands
 {
     internal class RankCommand : IChatCommand
     {
@@ -25,7 +25,18 @@ namespace TeamspeakActivityBot.ChatBot.Commands
 
             var clientId = await queryClient.GetUserByID(invokerId);
 
+            if(clientId == null)
+            {
+                return "Could not find invoker: " + invokerId;
+            }
+
+
             var rankUser = UserManager.User(clientId.DatabaseId);
+
+            if(rankUser == null)
+            {
+                return "Could not find db client: " + clientId.DatabaseId;
+            }
 
             return $"Your rank:\n"
                     + $"Active time: {UserManager.Users.OrderByDescending(x => x.ActiveTime).ToList().IndexOf(rankUser) + 1} - {rankUser.ActiveTime.GetAsDaysAndTime()}\n"

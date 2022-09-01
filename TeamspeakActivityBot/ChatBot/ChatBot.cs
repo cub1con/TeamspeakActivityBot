@@ -7,32 +7,19 @@ using TeamSpeak3QueryApi.Net.Specialized.Notifications;
 using TeamspeakActivityBot.Helper;
 using TeamspeakActivityBot.Model;
 
-namespace TeamspeakActivityBot.ChatBot
+namespace TeamspeakActivityBot.Chat
 {
-    public class ChatBot
+    public static class ChatBot
     {
         private static Logger Logger = LogManager.GetCurrentClassLogger();
 
-        private TeamSpeakClient queryClient;
-
 #if DEBUG
-        public char commandPrefix = '?';
+        public static char commandPrefix = '?';
 #else
-        public char commandPrefix = '!';
+        public static char commandPrefix = '!';
 #endif
 
-        public ChatBot(TeamSpeakClient query)
-        {
-            this.queryClient = query;
-            // Here would be code to register all channels, but this
-            // is not possible, because the queryClient has to be
-            // in the channel to get the notification
-            // await queryClient.RegisterTextChannelNotification();
-
-            this.queryClient.Subscribe<TextMessage>(HandleServerChatMessages);
-        }
-
-        private async void HandleServerChatMessages(IReadOnlyCollection<TextMessage> textMessages)
+        public static async void HandleServerChatMessages(IReadOnlyCollection<TextMessage> textMessages, TeamSpeakClient queryClient)
         {
             foreach (var msg in textMessages)
             {
@@ -46,21 +33,20 @@ namespace TeamspeakActivityBot.ChatBot
                 {
                     // TODO: Add dynamic commands / adding text returning commands via command
                     // Example: !addNewCommand 'commandName' 'text the command will return'
-                    // TODO: Make commands more dynamic
 
-                    var command = GetCommandFromMessage(msg);
+                    var command = GetTextCommandFromString(msg.Message);
                     var message = string.Empty;
 
                     var cmd = ChatCommandList.Commands.FirstOrDefault(x => x.Name.Contains(command.Command));
                     if (cmd != null)
                     {
-                        Logger.Info($"Starting {cmd.Name} - {msg.InvokerName}");
-                        message = await cmd.HandleCommand(this.queryClient, msg.InvokerId, command);
-                        Logger.Info($"Finished {command.Command} - {msg.InvokerName} -> {message}");
+                        Logger.Info($"Starting {nameof(cmd)}: {command.Command} - {msg.InvokerName}");
+                        message = await cmd.HandleCommand(queryClient, msg.InvokerId, command);
+                        Logger.Info($"Finished {nameof(cmd)}: {command.Command} - {msg.InvokerName} -> {message}");
                     }
                     else
                     {
-                        message = $"Command not found!";
+                        message = $"Command '{command.Command}' not found!";
                         Logger.Info(message);
                     }
 
@@ -74,29 +60,24 @@ namespace TeamspeakActivityBot.ChatBot
             }
         }
 
-        private static TextCommand GetCommandFromMessage(TextMessage msg)
+        private static TextCommand GetTextCommandFromString(string msg)
         {
-            var command = new TextCommand();
-
             // returns -1 if there is no whitespace
-            var whiteSpaceIndex = msg.Message.IndexOf(' ');
+            var whiteSpaceIndex = msg.IndexOf(' ');
 
             if (whiteSpaceIndex == -1)
             {
                 // Complete message is the command, remove !
-                command.Command = msg.Message.Substring(1).ToLower();
+                return new TextCommand() { Command = msg.Substring(1).ToLower() };
             }
-            else
+
+            // Cut the string, first substring will be command, second will be the argument
+            return new TextCommand()
             {
-                // Cut the string, first substring will be command, second will be the argument
-                command.Command = msg.Message.Substring(1, whiteSpaceIndex - 1).ToLower();
-
-                // Advance whiteSpaceIndex + 1 to ignore the actual whitespace
-                whiteSpaceIndex++;
-                command.Argument = msg.Message.Substring(whiteSpaceIndex, msg.Message.Length - whiteSpaceIndex).ToLower();
-            }
-
-            return command;
+                Command = msg.Substring(1, whiteSpaceIndex - 1).ToLower(),
+                // whiteSpaceIndex + 1 to ignore the actual whitespace
+                Argument = msg.Substring(whiteSpaceIndex, msg.Length - (whiteSpaceIndex + 1)).ToLower()
+            };
         }
     }
 }

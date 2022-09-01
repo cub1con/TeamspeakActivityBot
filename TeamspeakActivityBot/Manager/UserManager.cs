@@ -1,4 +1,5 @@
-﻿using System;
+﻿using NLog;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -11,14 +12,15 @@ namespace TeamspeakActivityBot.Manager
     public static class UserManager
     {
         private static string CLIENTS_FILE = Path.Combine(Environment.CurrentDirectory, "clients.json");
+        private static Logger Logger = LogManager.GetCurrentClassLogger();
 
-        public static List<User> Users => userFile?.Data ?? (userFile = LoadUsers()).Data;
+        public static List<User> Users => userFile.Data;
         private static JsonFile<List<User>> userFile { get; set; }
 
-        private static JsonFile<List<User>> LoadUsers()
+        private static JsonFile<List<User>> LoadUserfile()
         {
-            userFile = new JsonFile<List<User>>(CLIENTS_FILE);
-            return userFile;
+            Logger.Trace($"Initial loading of {CLIENTS_FILE}");
+            return new JsonFile<List<User>>(CLIENTS_FILE, false);
         }
 
         public static User User(int id)
@@ -31,12 +33,12 @@ namespace TeamspeakActivityBot.Manager
         private static User AddUser(User client)
         {
             Users.Add(client);
-            Save();
             return client;
         }
 
         public static void Save()
         {
+            Logger.Trace("Saving");
             userFile.Save();
         }
 
@@ -62,10 +64,19 @@ namespace TeamspeakActivityBot.Manager
             if (client.DisplayName != clientInfo.NickName)
             {
                 client.DisplayName = clientInfo.NickName;
-                Save();
             }
 
             return client;
+        }
+
+        public static void Load()
+        {
+            Logger.Trace("Loading");
+            if (userFile == null)
+                userFile = LoadUserfile();
+
+
+            userFile.Read();
         }
     }
 }

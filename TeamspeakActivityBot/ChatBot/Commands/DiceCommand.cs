@@ -1,10 +1,10 @@
 ﻿using System;
 using System.Threading.Tasks;
 using TeamSpeak3QueryApi.Net.Specialized;
-using TeamspeakActivityBot.ChatBot.Commands.Abstraction;
+using TeamspeakActivityBot.Chat.Commands.Abstraction;
 using TeamspeakActivityBot.Model;
 
-namespace TeamspeakActivityBot.ChatBot.Commands
+namespace TeamspeakActivityBot.Chat.Commands
 {
     public class DiceCommand : IChatCommand
     {

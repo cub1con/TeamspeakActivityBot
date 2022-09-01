@@ -25,6 +25,16 @@ namespace TeamspeakActivityBot
             Logger.Info("Running in debug mode");
 #endif
 
+
+            Logger.Info("Loading config");
+            ConfigManager.Load();
+            // Check for valid config and options
+            if (!ConfigManager.ValidateConfig())
+                Environment.Exit(1); // Exit the Application
+
+            Logger.Info("Loading clients");
+            UserManager.Load();
+
             // Initialise Sentry, then do the rest
             using (SentrySdk.Init(o =>
             {
@@ -47,12 +57,6 @@ namespace TeamspeakActivityBot
 #endif
             }))
             {
-                Logger.Info("Loading config");
-                ConfigManager.Load();
-                // Check for valid config and options
-                if (!ConfigManager.ValidateConfig())
-                    Environment.Exit(1); // Exit the Application
-
                 try
                 {
                     var bot = new Bot();

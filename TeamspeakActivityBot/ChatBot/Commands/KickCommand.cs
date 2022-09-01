@@ -3,11 +3,11 @@ using System.Linq;
 using System.Threading.Tasks;
 using TeamSpeak3QueryApi.Net.Specialized;
 using TeamSpeak3QueryApi.Net.Specialized.Responses;
-using TeamspeakActivityBot.ChatBot.Commands.Abstraction;
+using TeamspeakActivityBot.Chat.Commands.Abstraction;
 using TeamspeakActivityBot.Extensions;
 using TeamspeakActivityBot.Model;
 
-namespace TeamspeakActivityBot.ChatBot.Commands
+namespace TeamspeakActivityBot.Chat.Commands
 {
     public class KickCommand : IChatCommand
     {

@@ -1,8 +1,8 @@
 ﻿using System.Collections.Generic;
-using TeamspeakActivityBot.ChatBot.Commands;
-using TeamspeakActivityBot.ChatBot.Commands.Abstraction;
+using TeamspeakActivityBot.Chat.Commands;
+using TeamspeakActivityBot.Chat.Commands.Abstraction;
 
-namespace TeamspeakActivityBot.ChatBot
+namespace TeamspeakActivityBot.Chat
 {
     public static class ChatCommandList
     {

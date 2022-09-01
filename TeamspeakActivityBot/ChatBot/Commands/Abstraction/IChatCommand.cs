@@ -2,7 +2,7 @@
 using TeamSpeak3QueryApi.Net.Specialized;
 using TeamspeakActivityBot.Model;
 
-namespace TeamspeakActivityBot.ChatBot.Commands.Abstraction
+namespace TeamspeakActivityBot.Chat.Commands.Abstraction
 {
     public interface IChatCommand
     {

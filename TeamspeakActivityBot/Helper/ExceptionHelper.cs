@@ -33,14 +33,29 @@ namespace TeamspeakActivityBot.Helper
                     break;
                 case TeamSpeak3QueryApi.Net.QueryException:
                     var querryEx = (TeamSpeak3QueryApi.Net.QueryException)ex;
-                    Logger.Error(querryEx);
                     if (querryEx.Error != null)
                     {
-                        Logger.Error(querryEx.Error.Message);
-                        if (querryEx.Error.Message.ToLower() == ("invalid serverid"))
+                        switch (querryEx.Error.Message.ToLower())
                         {
-                            Logger.Error("Check if instance is running or setting 'QueryInstanceId' is set to the correct instance. Set to 0 to get default instance from server.");
+                            case "server is not running":
+                            case "invalid serverid":
+                                Logger.Error("Instance not found! -  Hint: Check if instance is running or the setting 'QueryInstanceId' is set to the correct instance. Set to 0 to get default instance from server.");
+                                break;
+
+
+                            case "nickname is already in use":
+                                Logger.Error("Nickkname is already in use! - Hint: Check if bot is still connected or awaiting timeout.");
+                                break;
+
+                            default:
+                                Logger.Error(querryEx);
+                                Logger.Error(querryEx.Error.Message);
+                                break;
                         }
+                    }
+                    else
+                    {
+                        Logger.Error(querryEx);
                     }
                     break;
                 default:

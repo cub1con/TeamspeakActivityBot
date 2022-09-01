@@ -1,6 +1,7 @@
 ﻿using NLog;
 using System;
 using System.IO;
+using System.Runtime.CompilerServices;
 using TeamspeakActivityBot.Helper;
 using TeamspeakActivityBot.Model;
 
@@ -16,19 +17,20 @@ namespace TeamspeakActivityBot.Manager
 
         private static Logger Logger = LogManager.GetCurrentClassLogger();
 
-        public static Config Config => configFile?.Data ?? (configFile = LoadConfig()).Data;
+        public static Config Config => configFile.Data;
 
         private static JsonFile<Config> configFile;
 
         private static JsonFile<Config> LoadConfig()
         {
-            configFile = new JsonFile<Config>(CONFIG_FILE);
-            return configFile;
+            Logger.Trace($"Initial loading of {CONFIG_FILE}");
+            return new JsonFile<Config>(CONFIG_FILE);
         }
 
 
         public static void Save()
         {
+            Logger.Trace("Saving");
             configFile.Save();
         }
 
@@ -105,6 +107,11 @@ namespace TeamspeakActivityBot.Manager
 
         public static void Load()
         {
+            Logger.Trace("Loading");
+            if (configFile == null)
+                configFile = LoadConfig();
+
+
             configFile.Read();
         }
     }

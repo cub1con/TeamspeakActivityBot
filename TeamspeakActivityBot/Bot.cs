@@ -1,10 +1,16 @@
 ﻿using NLog;
 using System;
 using System.Linq;
+using System.Net.Sockets;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
+using TeamSpeak3QueryApi.Net;
 using TeamSpeak3QueryApi.Net.Specialized;
+using TeamSpeak3QueryApi.Net.Specialized.Notifications;
 using TeamSpeak3QueryApi.Net.Specialized.Responses;
+using TeamspeakActivityBot.Chat;
+using TeamspeakActivityBot.Exceptions;
 using TeamspeakActivityBot.Extensions;
 using TeamspeakActivityBot.Helper;
 using TeamspeakActivityBot.Manager;
@@ -21,32 +27,34 @@ namespace TeamspeakActivityBot
 
         private TeamSpeakClient queryClient;
 
-        public Bot() { }
+        //private System.Threading.Timer timerThread;
 
-        public async Task Run()
+        public Bot()
         {
-            Logger.Info("Starting bot...");
             Logger.Info("Activated features:");
             Logger.Info($" - TrackClientActiveTimes: {ConfigManager.Config.TrackClientActiveTimes}");
             Logger.Info($" - TrackClientConnectedTimes: {ConfigManager.Config.TrackClientConnectedTimes}");
             Logger.Info($" - TopListUpdateChannel: {ConfigManager.Config.TopListUpdateChannel}");
             Logger.Info($" - EnableChatCommands: {ConfigManager.Config.ChatCommandsEnabled}");
+        }
+
+        public async Task Run()
+        {
+            Logger.Info("Starting bot...");
+            int retryCounter = 0;
 
             // Main loop, restart client on connection loss
-            Console.WriteLine("[Press any key to exit]");
-            while (true && !Console.KeyAvailable)
+            while (retryCounter < 3 && !Console.KeyAvailable)
             {
                 try
                 {
                     // Get connected client and identity
                     this.queryClient = await GetConnectedClient();
 
+
                     if (!this.queryClient.Client.IsConnected || (await this.queryClient.WhoAmI()).VirtualServerStatus == "unknown")
                     {
-                        Logger.Warn("Could not connect, retrying in 15s");
-                        this.queryClient.Dispose();
-                        await Task.Delay(TimeSpan.FromSeconds(15));
-                        continue;
+                        throw new NotConnectedException();
                     }
 
                     await this.queryClient.ChangeNickName(ConfigManager.Config.BotName);
@@ -62,9 +70,15 @@ namespace TeamspeakActivityBot
                         // register server wide text notifications
                         await this.queryClient.RegisterTextServerNotification();
 
-                        var tmp = new ChatBot.ChatBot(queryClient);
+                        // Here would be code to register all channels, but this
+                        // is not possible, because the queryClient has to be
+                        // in the channel to get the notification
+                        // await queryClient.RegisterTextChannelNotification();
+
+                        this.queryClient.Subscribe<TextMessage>((o) => { ChatBot.HandleServerChatMessages(o, this.queryClient); });
                     }
 
+                    Logger.Info("Bot connected...");
 
 
                     var lastUserStatsUpdate = DateTime.Now;
@@ -85,48 +99,62 @@ namespace TeamspeakActivityBot
                             await UpdateTopListChannel();
                             lastChannelUpdate = DateTime.Now;
                         }
+
+                        // https://docs.microsoft.com/en-us/dotnet/api/system.threading.periodictimer?view=net-6.0
+                        // https://stackoverflow.com/questions/30462079/run-async-method-regularly-with-specified-interval#:~:text=FromMinutes(5))%3B-,.NET%206%20update,-%3A%20It%20is
                         await Task.Delay(TimeSpan.FromSeconds(1));
                     }
                 }
                 catch (Exception ex)
                 {
+                    retryCounter++;
+                    
+                    if (ex.GetType() == typeof(NotConnectedException))
+                    {
+                        Logger.Warn("Could not connect");
+                        throw;
+                    }
+
+                    if (ex.GetType() == typeof(QueryException))
+                    {
+                        ExceptionHelper.HandleBotException(ex);
+                        Logger.Warn("Retrying in 60 seconds...");
+                        this.queryClient?.Dispose();
+                        await Task.Delay(TimeSpan.FromSeconds(60));
+                        continue;
+                    }
+
                     ExceptionHelper.HandleBotException(ex);
                     continue;
                 }
 
-                return;
+                retryCounter = int.MaxValue;
             }
         }
 
-        private async Task<TeamSpeakClient> GetConnectedClient()
+        private static async Task<TeamSpeakClient> GetConnectedClient()
         {
-            // Create the actual client, connect, login to the server
+            Logger.Debug("Creating Client...");
+            // Create the client
             var bot = new TeamSpeakClient(ConfigManager.Config.Host, ConfigManager.Config.HostPort, TimeSpan.FromMinutes(1));
 
-            try
-            {
-                // Connect client to server
-                // Errors produced here are from server
-                await bot.Connect();
-                await bot.Login(ConfigManager.Config.QueryUsername, ConfigManager.Config.QueryPassword);
+            // Connect client to server
+            // Errors produced here are from server
+            await bot.Connect();
+            await bot.Login(ConfigManager.Config.QueryUsername, ConfigManager.Config.QueryPassword);
 
-                // Choose instance to connect
-                // Default fresh installed Server Instance is 1, but we query it from the server because it might be not 1
-                // Errors produced after here are probably instance related, but could be server related
-                if (ConfigManager.Config.QueryInstanceId != 0)
-                {
-                    await bot.UseServer(ConfigManager.Config.QueryInstanceId);
-                }
-                else
-                {
-                    Logger.Warn("No Instance configured, fallback to query.");
-                    var availableInstances = (await bot.GetServers()).ToArray();
-                    await bot.UseServer(availableInstances.FirstOrDefault().Id);
-                }
-            }
-            catch (Exception ex)
+            // Choose instance to connect
+            // Default fresh installed Server Instance is 1, but we query it from the server because it might be not 1
+            // Errors produced after here are probably instance related, but could be server related
+            if (ConfigManager.Config.QueryInstanceId != 0)
             {
-                ExceptionHelper.HandleBotException(ex);
+                await bot.UseServer(ConfigManager.Config.QueryInstanceId);
+            }
+            else
+            {
+                Logger.Info("No Instance configured, fallback to query");
+                var availableInstances = (await bot.GetServers()).ToArray();
+                await bot.UseServer(availableInstances.FirstOrDefault().Id);
             }
 
             return bot;
@@ -150,20 +178,30 @@ namespace TeamspeakActivityBot
 
 
             // Get the channel leaderboard
-            var newChannelDescription = FormatChannelDescription(clients);
+            var newChannelDescription = GetFormatedChannelDescription(clients);
             // Only update the channel if there is a difference
             if (topListChannelInfo.Description != newChannelDescription)
+            {
+                Logger.Trace("Editing channel description");
                 await this.queryClient.EditChannel(ConfigManager.Config.TopListChannelId, ChannelEdit.channel_description, newChannelDescription);
+            }
 
             // Get new channel name
-            var channelName = FormatChannelName(clients.OrderByDescending(x => x.ActiveTime).FirstOrDefault());
+            var channelName = GetFormatedChannelName(clients.OrderByDescending(x => x.ActiveTime).FirstOrDefault());
             // Update channel name with mvp, if name is not identical
             if (topListChannelInfo.Name != channelName)
+            {
+                Logger.Trace("Editing channel name");
                 await this.queryClient.EditChannel(ConfigManager.Config.TopListChannelId, ChannelEdit.channel_name, channelName);
+            }
+
+            Logger.Trace("Finished Updating channel info");
         }
 
-        private string FormatChannelDescription(User[] clients)
+        private static string GetFormatedChannelDescription(User[] clients)
         {
+            Logger.Trace("Started formatting channel description");
+
             // StringBuilder to hold the channel description
             var sb = new StringBuilder();
             sb.AppendLine($"Seit {ConfigManager.Config.TrackLoggingSince}:");
@@ -205,6 +243,8 @@ namespace TeamspeakActivityBot
                 "-> Durchschnittlich aktiv Ratio: {0}",
                 ((double)clientsActiveTimeTotal.Ticks / (double)clientsCompleteTimeTotal.Ticks).ToString("0.000")));
 
+
+            Logger.Trace("Finished formatting channel description");
             return sb.ToString();
         }
 
@@ -213,8 +253,9 @@ namespace TeamspeakActivityBot
         /// </summary>
         /// <param name="topUser">Client object of the topUser</param>
         /// <returns></returns>
-        private string FormatChannelName(User topUser)
+        private static string GetFormatedChannelName(User topUser)
         {
+            Logger.Trace("Started formatting channel name");
             // Get the template name and fill in the Client.DisplayName
             var channelName = ConfigManager.Config.TopListChannelNameFormat.Replace("%NAME%", topUser.DisplayName);
 
@@ -233,6 +274,8 @@ namespace TeamspeakActivityBot
                     userName = userName.Substring(0, maxNameLength).Trim();
                 channelName = ConfigManager.Config.TopListChannelNameFormat.Replace("%NAME%", userName);
             }
+
+            Logger.Trace("Finished formatting channel name");
             return channelName;
         }
 
@@ -243,11 +286,11 @@ namespace TeamspeakActivityBot
             bool anyChange = false;
 
             // Get all full clients
+            Logger.Trace("Getting FullClients");
             var fullClients = await this.queryClient.GetFullClientsDetailedInfo();
 
             // Filter clients if they are connected in multiple client instances
             var clients = fullClients.DistinctBy(x => x.DatabaseId);
-
 
             // We want to pass all users here, because the function handles if the user is untracked etc.
             foreach (var ci in clients)
@@ -255,6 +298,8 @@ namespace TeamspeakActivityBot
 
             if (anyChange)
                 UserManager.Save();
+
+            Logger.Trace("Finished collecting online time");
         }
 
         /// <summary>
