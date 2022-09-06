@@ -3,15 +3,26 @@ using System.Linq;
 using System.Threading.Tasks;
 using TeamSpeak3QueryApi.Net.Specialized;
 using TeamSpeak3QueryApi.Net.Specialized.Responses;
-using TeamspeakActivityBot.Manager;
 
 namespace TeamspeakActivityBot.Extensions
 {
     public static class TeamSpeakClientExtension
     {
+        /// <summary>
+        /// Returns only full clients, ignores querys
+        /// </summary>
+        /// <param name="client"></param>
+        /// <returns></returns>
         public static async Task<IEnumerable<GetClientInfo>> GetFullClients(this TeamSpeakClient client)
         {
-            return (await client.GetClients()).Where(x => x.Type == ClientType.FullClient);
+            var clients = await client.GetClients();
+
+            if (clients == null)
+                return new List<GetClientInfo>();
+
+            return clients.Where(x => x.Type == ClientType.FullClient);
+            // normally we would do this, but the TeamSpeakClient breaks if access it like this
+            //return (await client.GetClients()).Where(x => x.Type == ClientType.FullClient);
         }
 
         public static async Task<List<GetClientDetailedInfo>> GetFullClientsDetailedInfo(this TeamSpeakClient client)
@@ -21,6 +32,7 @@ namespace TeamspeakActivityBot.Extensions
             {
                 returnList.Add(await client.GetClientInfo(clientInfo.Id));
             }
+
             return returnList;
         }
 
@@ -32,35 +44,6 @@ namespace TeamspeakActivityBot.Extensions
         public static async Task<GetClientInfo> GetUserByDbID(this TeamSpeakClient client, int id)
         {
             return (await client.GetFullClients()).FirstOrDefault(x => x.DatabaseId == id);
-        }
-
-        public static async Task<List<GetClientDetailedInfo>> GetFilteredClients(this TeamSpeakClient client, ConfigManager configManager)
-        {
-            var returnList = new List<GetClientDetailedInfo>();
-
-            // Get a ClientInfo for every connected user
-            foreach (var cl in await client.GetFullClientsDetailedInfo())
-            {
-                // Check if User is in an ignored group, break
-                if (cl.ServerGroupIds.Any(id => configManager.Config.TrackIgnoreUserGroups.Contains(id)))
-                {
-                    continue;
-                }
-
-                // Check if User is in an Tracked group, continue
-                if (!cl.ServerGroupIds.Any(id => configManager.Config.TrackUserGroups.Contains(id)))
-                {
-                    continue;
-                }
-
-                // Check if User is in an ignored channel, break
-                if (configManager.Config.TrackIgnoreChannels.Contains(cl.ChannelId))
-                {
-                    continue;
-                }
-                returnList.Add(cl);
-            }
-            return returnList;
         }
     }
 }

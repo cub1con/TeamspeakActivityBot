@@ -5,7 +5,12 @@
     <TargetFramework>net6.0</TargetFramework>
     <StartupObject>TeamspeakActivityBot.Program</StartupObject>
     <DebugType>portable</DebugType>
-    <Version>0.1.1</Version>
+    <Version>0.2.0</Version>
+    <VersionSuffix>0.2.0.$([System.DateTime]::UtcNow.ToString(mmff))</VersionSuffix>
+    <AssemblyVersion Condition=" '$(VersionSuffix)' == '' ">0.0.0.1</AssemblyVersion>
+    <AssemblyVersion Condition=" '$(VersionSuffix)' != '' ">$(VersionSuffix)</AssemblyVersion>
+    <Version Condition=" '$(VersionSuffix)' == '' ">0.0.1.0</Version>
+    <Version Condition=" '$(VersionSuffix)' != '' ">$(VersionSuffix)</Version>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
@@ -20,7 +25,10 @@
     <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
     <PackageReference Include="NLog" Version="5.0.1" />
     <PackageReference Include="Sentry" Version="3.17.1" />
-    <PackageReference Include="TeamSpeak3QueryApi" Version="1.13.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\TeamSpeak3QueryApi\src\TeamSpeak3QueryApi\TeamSpeak3QueryApi.csproj" />
   </ItemGroup>
 
   <ItemGroup>

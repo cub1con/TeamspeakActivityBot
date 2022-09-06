@@ -1,5 +1,7 @@
-﻿using System;
+﻿using NLog;
+using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using TeamSpeak3QueryApi.Net.Specialized.Responses;
 using TeamspeakActivityBot.Helper;
@@ -7,41 +9,48 @@ using TeamspeakActivityBot.Model;
 
 namespace TeamspeakActivityBot.Manager
 {
-    public class UserManager
+    public static class UserManager
     {
-        public List<User> Users => userFile.Data;
-        private JsonFile<List<User>> userFile { get; set; }
+        private static string CLIENTS_FILE = Path.Combine(Environment.CurrentDirectory, "clients.json");
+        private static Logger Logger = LogManager.GetCurrentClassLogger();
 
-        public UserManager(string file)
+        public static List<User> Users => userFile.Data;
+        private static JsonFile<List<User>> userFile { get; set; }
+
+        private static JsonFile<List<User>> LoadUserfile()
         {
-            this.userFile = new JsonFile<List<User>>(file);
+            Logger.Trace($"Initial loading of {CLIENTS_FILE}");
+            return new JsonFile<List<User>>(CLIENTS_FILE, false);
         }
 
-        public User this[int id] => HasClient(id) ? this.Users.First(x => x.Id == id) : null;
-
-        public bool HasClient(int id) { return this.Users.Select(x => x.Id).Contains(id); }
-
-        private User AddUser(User client)
+        public static User User(int id)
         {
-            this.Users.Add(client);
-            this.Save();
+            return HasClient(id) ? Users.First(x => x.Id == id) : null;
+        }
+
+        public static bool HasClient(int id) { return Users.Select(x => x.Id).Contains(id); }
+
+        private static User AddUser(User client)
+        {
+            Users.Add(client);
             return client;
         }
 
-        public void Save()
+        public static void Save()
         {
+            Logger.Trace("Saving Userfile");
             userFile.Save();
         }
 
-        public User GetUser(GetClientDetailedInfo clientInfo)
+        public static User GetUser(GetClientDetailedInfo clientInfo)
         {
-            if(clientInfo == null) 
+            if (clientInfo == null)
                 return null;
 
-            var client = this[clientInfo.DatabaseId];
+            var client = User(clientInfo.DatabaseId);
             if (client == null)
             {
-                return this.AddUser(new User()
+                return AddUser(new User()
                 {
                     Id = clientInfo.DatabaseId,
                     DisplayName = clientInfo.NickName,
@@ -55,10 +64,19 @@ namespace TeamspeakActivityBot.Manager
             if (client.DisplayName != clientInfo.NickName)
             {
                 client.DisplayName = clientInfo.NickName;
-                this.Save();
             }
 
             return client;
+        }
+
+        public static void Load()
+        {
+            Logger.Trace("Loading Userfile");
+            if (userFile == null)
+                userFile = LoadUserfile();
+
+
+            userFile.Read();
         }
     }
 }

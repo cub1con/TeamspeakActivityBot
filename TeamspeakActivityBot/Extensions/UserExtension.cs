@@ -1,5 +1,4 @@
-﻿using System;
-using TeamspeakActivityBot.Model;
+﻿using TeamspeakActivityBot.Model;
 
 namespace TeamspeakActivityBot.Extensions
 {
@@ -10,7 +9,7 @@ namespace TeamspeakActivityBot.Extensions
             return $"{cl.ActiveTime.GetAsDaysAndTime()} - {cl.DisplayName}";
         }
 
-        public static string GetTotalTimeAndName(this User cl) 
+        public static string GetTotalTimeAndName(this User cl)
         {
             return $"{cl.TotalTime.GetAsDaysAndTime()} - {cl.DisplayName} - {cl.GetActiveTimeRatio()}";
         }
