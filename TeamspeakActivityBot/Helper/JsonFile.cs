@@ -11,9 +11,12 @@ namespace TeamspeakActivityBot.Helper
 
         private T _data;
 
-        public JsonFile(string file)
+        private bool saveOnSet;
+
+        public JsonFile(string file, bool saveOnSet = true)
         {
             jsonFile = new FileInfo(file);
+            this.saveOnSet = saveOnSet;
         }
 
         public T Data
@@ -28,7 +31,9 @@ namespace TeamspeakActivityBot.Helper
             set
             {
                 _data = value;
-                Save();
+
+                if (saveOnSet)
+                    Save();
             }
         }
 
@@ -36,9 +41,9 @@ namespace TeamspeakActivityBot.Helper
         {
             lock (fileLock)
             {
-                using var fStream = this.jsonFile.OpenWrite();
-                using var writer = new StreamWriter(fStream);
-                writer.Write(JsonConvert.SerializeObject(_data, Formatting.Indented));
+                var jsonString = JsonConvert.SerializeObject(_data, Formatting.Indented);
+                using var fStream = this.jsonFile.CreateText();
+                fStream.Write(jsonString);
             }
         }
 

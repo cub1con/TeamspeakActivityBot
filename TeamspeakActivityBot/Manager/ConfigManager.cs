@@ -1,23 +1,35 @@
 ﻿using NLog;
+using System;
+using System.IO;
 using TeamspeakActivityBot.Helper;
 using TeamspeakActivityBot.Model;
 
 namespace TeamspeakActivityBot.Manager
 {
-    public class ConfigManager
+    public static class ConfigManager
     {
+#if DEBUG
+        private static string CONFIG_FILE = Path.Combine(Environment.CurrentDirectory, "config-dev.json");
+#else
+        private static string CONFIG_FILE = Path.Combine(Environment.CurrentDirectory, "config.json");
+#endif
+
         private static Logger Logger = LogManager.GetCurrentClassLogger();
 
-        public Config Config => configFile.Data;
-        private JsonFile<Config> configFile;
+        public static Config Config => configFile.Data;
 
-        public ConfigManager(string file)
+        private static JsonFile<Config> configFile;
+
+        private static JsonFile<Config> LoadConfig()
         {
-            configFile = new JsonFile<Config>(file);
+            Logger.Trace($"Initial loading of {CONFIG_FILE}");
+            return new JsonFile<Config>(CONFIG_FILE);
         }
 
-        public void Save()
+
+        public static void Save()
         {
+            Logger.Trace("Saving Configfile");
             configFile.Save();
         }
 
@@ -25,58 +37,58 @@ namespace TeamspeakActivityBot.Manager
         /// Validates config
         /// </summary>
         /// <returns>returns true if config is valid</returns>
-        public bool ValidateConfig()
+        public static bool ValidateConfig()
         {
             Logger.Info("Validating config");
 
             bool error = false;
-            if (this.Config.Host == "")
+            if (Config.Host == "")
             {
                 Logger.Error("No Host set!");
                 error = true;
             }
 
-            if (this.Config.HostPort <= 0)
+            if (Config.HostPort <= 0)
             {
                 Logger.Error("No valid Port set!");
                 error = true;
             }
 
-            if (this.Config.QueryUsername == "")
+            if (Config.QueryUsername == "")
             {
                 Logger.Error("No QueryUsername set!");
                 error = true;
             }
 
-            if (this.Config.QueryPassword == "")
+            if (Config.QueryPassword == "")
             {
                 Logger.Error("No QueryPassword set!");
                 error = true;
             }
 
-            if (string.IsNullOrWhiteSpace(this.Config.BotName))
+            if (string.IsNullOrWhiteSpace(Config.BotName))
             {
                 Logger.Error("No BotName set!");
                 error = true;
             }
 
             // Only validate options if feature is enabled
-            if (this.Config.TopListUpdateChannel)
+            if (Config.TopListUpdateChannel)
             {
-                if (this.Config.TopListChannelId <= 0)
+                if (Config.TopListChannelId <= 0)
                 {
                     Logger.Error("No valid TopListChannelId set!");
                     error = true;
                 }
 
-                if (!this.Config.TopListChannelNameFormat.Contains("%NAME%"))
+                if (!Config.TopListChannelNameFormat.Contains("%NAME%"))
                 {
                     Logger.Error("No Wildcard '%NAME%' in 'TopListChannelNameFormat found!");
                     error = true;
                 }
             }
 
-            if (this.Config.SentryDsn != "")
+            if (Config.SentryDsn != "")
             {
                 Logger.Info($"Using Sentry");
             }
@@ -92,9 +104,14 @@ namespace TeamspeakActivityBot.Manager
             return !error;
         }
 
-        public void Load()
+        public static void Load()
         {
-            this.configFile.Read();
+            Logger.Trace("Loading Configfile");
+            if (configFile == null)
+                configFile = LoadConfig();
+
+
+            configFile.Read();
         }
     }
 }

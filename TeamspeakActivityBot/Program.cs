@@ -2,7 +2,7 @@
 using Sentry;
 using Sentry.Infrastructure;
 using System;
-using System.IO;
+using System.Reflection;
 using TeamspeakActivityBot.Helper;
 using TeamspeakActivityBot.Manager;
 
@@ -10,37 +10,36 @@ namespace TeamspeakActivityBot
 {
     class Program
     {
-        private static string CLIENTS_FILE = Path.Combine(Environment.CurrentDirectory, "clients.json");
-
-#if DEBUG
-        private static string CONFIG_FILE = Path.Combine(Environment.CurrentDirectory, "config-dev.json");
-#else
-        private static string CONFIG_FILE = Path.Combine(Environment.CurrentDirectory, "config.json");
-#endif
-
         private static readonly Logger Logger = LogManager.GetCurrentClassLogger();
-
-        private static UserManager ClientManager;
-        private static ConfigManager ConfigManager;
 
         static void Main(string[] args)
         {
             AppDomain currentDomain = AppDomain.CurrentDomain;
             currentDomain.UnhandledException += new UnhandledExceptionEventHandler(DomainUnhandledExceptionHandler);
 
+            string environment = "prod";
+#if DEBUG
+            environment = "dev";
+            Logger.Info("Running in debug mode");
+#endif
+
+            var assembly = Assembly.GetExecutingAssembly().GetName();
+            var release = $"{assembly.Name} - {environment}-{assembly.Version}";
 
             // "Draw" TAB logo
             Console.WriteLine(Misc.Memes.Logo);
             // Print version
-            Logger.Info($"TeamspeakActivityBot says hi - v.{typeof(Program).Assembly.GetName().Version}");
-#if DEBUG
-            Logger.Info("Running in debug mode");
-#endif
+            Logger.Info($"{release} says hi");
 
 
-            // Initiate config
             Logger.Info("Loading config");
-            ConfigManager = new ConfigManager(CONFIG_FILE);
+            ConfigManager.Load();
+            // Check for valid config and options
+            if (!ConfigManager.ValidateConfig())
+                Environment.Exit(1); // Exit the Application
+
+            Logger.Info("Loading clients");
+            UserManager.Load();
 
             // Initialise Sentry, then do the rest
             using (SentrySdk.Init(o =>
@@ -55,31 +54,25 @@ namespace TeamspeakActivityBot
                 o.TracesSampleRate = 1.0;
                 o.ShutdownTimeout = TimeSpan.FromSeconds(5);
 #if DEBUG
-                o.Debug = true;
-                o.Environment = "dev";
                 o.DiagnosticLevel = SentryLevel.Debug;
                 o.DiagnosticLogger = new TraceDiagnosticLogger(SentryLevel.Debug);
-#else
-                o.Environment = "prod";
 #endif
+                o.Debug = true;
+                o.Environment = environment;
+                o.Release = release;
             }))
             {
-                // Check for valid config and options
-                if (!ConfigManager.ValidateConfig())
-                    Environment.Exit(1); // Exit the Application
-
                 try
                 {
-                    ClientManager = new UserManager(CLIENTS_FILE);
-                    var bot = new Bot(ClientManager, ConfigManager);
+                    var bot = new Bot();
                     bot.Run().Wait();
+                    bot.Dispose();
                     Logger.Info("Done.");
                 }
                 catch (Exception ex)
                 {
                     ExceptionHelper.HandleException(ex);
                     Logger.Error("Terminating...");
-                    Environment.Exit(1);
                 }
 
                 return;
