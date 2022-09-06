@@ -2,6 +2,7 @@
 using Sentry;
 using Sentry.Infrastructure;
 using System;
+using System.Reflection;
 using TeamspeakActivityBot.Helper;
 using TeamspeakActivityBot.Manager;
 
@@ -16,14 +17,19 @@ namespace TeamspeakActivityBot
             AppDomain currentDomain = AppDomain.CurrentDomain;
             currentDomain.UnhandledException += new UnhandledExceptionEventHandler(DomainUnhandledExceptionHandler);
 
+            string environment = "prod";
+#if DEBUG
+            environment = "dev";
+            Logger.Info("Running in debug mode");
+#endif
+
+            var assembly = Assembly.GetExecutingAssembly().GetName();
+            var release = $"{assembly.Name} - {environment}-{assembly.Version}";
 
             // "Draw" TAB logo
             Console.WriteLine(Misc.Memes.Logo);
             // Print version
-            Logger.Info($"TeamspeakActivityBot says hi - v.{typeof(Program).Assembly.GetName().Version}");
-#if DEBUG
-            Logger.Info("Running in debug mode");
-#endif
+            Logger.Info($"{release} says hi");
 
 
             Logger.Info("Loading config");
@@ -48,26 +54,25 @@ namespace TeamspeakActivityBot
                 o.TracesSampleRate = 1.0;
                 o.ShutdownTimeout = TimeSpan.FromSeconds(5);
 #if DEBUG
-                o.Debug = true;
-                o.Environment = "dev";
                 o.DiagnosticLevel = SentryLevel.Debug;
                 o.DiagnosticLogger = new TraceDiagnosticLogger(SentryLevel.Debug);
-#else
-                o.Environment = "prod";
 #endif
+                o.Debug = true;
+                o.Environment = environment;
+                o.Release = release;
             }))
             {
                 try
                 {
                     var bot = new Bot();
                     bot.Run().Wait();
+                    bot.Dispose();
                     Logger.Info("Done.");
                 }
                 catch (Exception ex)
                 {
                     ExceptionHelper.HandleException(ex);
                     Logger.Error("Terminating...");
-                    Environment.Exit(1);
                 }
 
                 return;
