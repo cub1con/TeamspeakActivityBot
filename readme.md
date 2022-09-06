@@ -3,10 +3,10 @@
 TeamspeakActivityBot is a bot written in C# for TeamSpeak 3.
 
 ## What can it do?
-Track active as well as total connected time of users, update a channel to provide a leaderboard showing which users are most active or connected and some minor fun facts.
+Track active as well as total connected time of users, update a channel to provide a leaderboard showing detailed information on how long users are active or connected and some minor fun facts.
 
 Provide some chat commands in the serverwide chat.
-(It's sadly not possible to react to commands in all channels, because the query client would have to be in all channels simultaneously.)
+(It's sadly not possible to react to commands in all channels, because the query client would have to be connected to all channels simultaneously.)
 
 ## Requirements to build
 - Visual Studio 2022
