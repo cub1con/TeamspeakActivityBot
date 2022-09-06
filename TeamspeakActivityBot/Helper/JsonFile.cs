@@ -32,7 +32,7 @@ namespace TeamspeakActivityBot.Helper
             {
                 _data = value;
 
-                if(saveOnSet)
+                if (saveOnSet)
                     Save();
             }
         }

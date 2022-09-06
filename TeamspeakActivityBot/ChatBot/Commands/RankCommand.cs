@@ -25,7 +25,7 @@ namespace TeamspeakActivityBot.Chat.Commands
 
             var clientId = await queryClient.GetUserByID(invokerId);
 
-            if(clientId == null)
+            if (clientId == null)
             {
                 return "Could not find invoker: " + invokerId;
             }
@@ -33,7 +33,7 @@ namespace TeamspeakActivityBot.Chat.Commands
 
             var rankUser = UserManager.User(clientId.DatabaseId);
 
-            if(rankUser == null)
+            if (rankUser == null)
             {
                 return "Could not find db client: " + clientId.DatabaseId;
             }

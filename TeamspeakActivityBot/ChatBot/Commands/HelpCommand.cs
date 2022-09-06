@@ -1,5 +1,4 @@
-﻿using System;
-using System.Linq;
+﻿using System.Linq;
 using System.Threading.Tasks;
 using TeamSpeak3QueryApi.Net.Specialized;
 using TeamspeakActivityBot.Chat.Commands.Abstraction;
