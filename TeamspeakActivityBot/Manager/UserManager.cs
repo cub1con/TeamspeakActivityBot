@@ -38,7 +38,7 @@ namespace TeamspeakActivityBot.Manager
 
         public static void Save()
         {
-            Logger.Trace("Saving");
+            Logger.Trace("Saving Userfile");
             userFile.Save();
         }
 
@@ -71,7 +71,7 @@ namespace TeamspeakActivityBot.Manager
 
         public static void Load()
         {
-            Logger.Trace("Loading");
+            Logger.Trace("Loading Userfile");
             if (userFile == null)
                 userFile = LoadUserfile();
 

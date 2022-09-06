@@ -1,7 +1,6 @@
 ﻿using NLog;
 using System;
 using System.IO;
-using System.Runtime.CompilerServices;
 using TeamspeakActivityBot.Helper;
 using TeamspeakActivityBot.Model;
 
@@ -30,7 +29,7 @@ namespace TeamspeakActivityBot.Manager
 
         public static void Save()
         {
-            Logger.Trace("Saving");
+            Logger.Trace("Saving Configfile");
             configFile.Save();
         }
 
@@ -107,7 +106,7 @@ namespace TeamspeakActivityBot.Manager
 
         public static void Load()
         {
-            Logger.Trace("Loading");
+            Logger.Trace("Loading Configfile");
             if (configFile == null)
                 configFile = LoadConfig();
 
