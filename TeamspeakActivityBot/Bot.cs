@@ -1,7 +1,9 @@
 ﻿using NLog;
+using NLog.Fluent;
 using System;
 using System.Linq;
-using System.Net.Sockets;
+using System.Net;
+using System.Reflection.PortableExecutable;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -18,7 +20,7 @@ using TeamspeakActivityBot.Model;
 
 namespace TeamspeakActivityBot
 {
-    public class Bot
+    public class Bot : IDisposable
     {
         private static readonly TimeSpan WW2DURATION = (new DateTime(1945, 9, 2) - new DateTime(1939, 9, 1));
         private const int MAX_CHANNEL_NAME_LENGTH = 40;
@@ -26,8 +28,6 @@ namespace TeamspeakActivityBot
         private static readonly Logger Logger = LogManager.GetCurrentClassLogger();
 
         private TeamSpeakClient queryClient;
-
-        //private System.Threading.Timer timerThread;
 
         public Bot()
         {
@@ -37,6 +37,7 @@ namespace TeamspeakActivityBot
             Logger.Info($" - TopListUpdateChannel: {ConfigManager.Config.TopListUpdateChannel}");
             Logger.Info($" - EnableChatCommands: {ConfigManager.Config.ChatCommandsEnabled}");
         }
+
 
         public async Task Run()
         {
@@ -80,35 +81,40 @@ namespace TeamspeakActivityBot
 
                     Logger.Info("Bot connected...");
 
-
                     var lastUserStatsUpdate = DateTime.Now;
                     var lastChannelUpdate = DateTime.MinValue;
 
-                    // TODO: Add logic to handle connectionloss and reconnect
-                    while (!Console.KeyAvailable)
+                    // https://docs.microsoft.com/en-us/dotnet/api/system.threading.periodictimer?view=net-6.0
+                    // https://stackoverflow.com/questions/30462079/run-async-method-regularly-with-specified-interval#:~:text=FromMinutes(5))%3B-,.NET%206%20update,-%3A%20It%20is
+                    var periodicTimer = new PeriodicTimer(TimeSpan.FromSeconds(1));
+                    while (await periodicTimer.WaitForNextTickAsync())
                     {
+                        var runningTime = DateTime.Now;
+
+                        if (Console.KeyAvailable)
+                        {
+                            periodicTimer.Dispose();
+                            return;
+                        }
+
                         // Collect ClientTimes after timespan if option is enabled
-                        if (DateTime.Now - lastUserStatsUpdate >= ConfigManager.Config.TrackTimeLogInterval && ConfigManager.Config.TrackClientTimes)
+                        if (runningTime - lastUserStatsUpdate >= ConfigManager.Config.TrackTimeLogInterval && ConfigManager.Config.TrackClientTimes)
                         {
                             await CollectClientTimes(lastUserStatsUpdate);
                             lastUserStatsUpdate = DateTime.Now;
                         }
                         // Update the TopListChannel with toplist in description and MVP in channel name
-                        if (DateTime.Now - lastChannelUpdate >= ConfigManager.Config.TopListChannelUpdateInterval && ConfigManager.Config.TopListUpdateChannel)
+                        if (runningTime - lastChannelUpdate >= ConfigManager.Config.TopListChannelUpdateInterval && ConfigManager.Config.TopListUpdateChannel)
                         {
                             await UpdateTopListChannel();
                             lastChannelUpdate = DateTime.Now;
                         }
-
-                        // https://docs.microsoft.com/en-us/dotnet/api/system.threading.periodictimer?view=net-6.0
-                        // https://stackoverflow.com/questions/30462079/run-async-method-regularly-with-specified-interval#:~:text=FromMinutes(5))%3B-,.NET%206%20update,-%3A%20It%20is
-                        await Task.Delay(TimeSpan.FromSeconds(1));
                     }
                 }
                 catch (Exception ex)
                 {
                     retryCounter++;
-                    
+
                     if (ex.GetType() == typeof(NotConnectedException))
                     {
                         Logger.Warn("Could not connect");
@@ -118,7 +124,7 @@ namespace TeamspeakActivityBot
                     if (ex.GetType() == typeof(QueryException))
                     {
                         ExceptionHelper.HandleBotException(ex);
-                        Logger.Warn("Retrying in 60 seconds...");
+                        Logger.Warn($"Retrying in 60 seconds. Retry {retryCounter}/3...");
                         this.queryClient?.Dispose();
                         await Task.Delay(TimeSpan.FromSeconds(60));
                         continue;
@@ -139,12 +145,13 @@ namespace TeamspeakActivityBot
             var bot = new TeamSpeakClient(ConfigManager.Config.Host, ConfigManager.Config.HostPort, TimeSpan.FromMinutes(1));
 
             // Connect client to server
-            // Errors produced here are from server
             await bot.Connect();
+
+            // Errors produced here are from the server
             await bot.Login(ConfigManager.Config.QueryUsername, ConfigManager.Config.QueryPassword);
 
             // Choose instance to connect
-            // Default fresh installed Server Instance is 1, but we query it from the server because it might be not 1
+            // Default fresh installed server instance is 1, but we query it from the server because it might be not 1
             // Errors produced after here are probably instance related, but could be server related
             if (ConfigManager.Config.QueryInstanceId != 0)
             {
@@ -176,7 +183,6 @@ namespace TeamspeakActivityBot
             // Get topListChannel info
             var topListChannelInfo = await this.queryClient.GetChannelInfo(ConfigManager.Config.TopListChannelId);
 
-
             // Get the channel leaderboard
             var newChannelDescription = GetFormatedChannelDescription(clients);
             // Only update the channel if there is a difference
@@ -202,45 +208,48 @@ namespace TeamspeakActivityBot
         {
             Logger.Trace("Started formatting channel description");
 
+            // Only select first 10 users for leaderboard
+            int listLength = 10;
+
             // StringBuilder to hold the channel description
             var sb = new StringBuilder();
-            sb.AppendLine($"Seit {ConfigManager.Config.TrackLoggingSince}:");
+            sb.AppendLine($"Since {ConfigManager.Config.TrackLoggingSince}:{Environment.NewLine}");
 
-            // Only select first 10 users
             // Format for TopUsers
-            var clientsActiveTimeFirst10 = clients.OrderByDescending(x => x.ActiveTime).Take(10).ToArray();
-
-            var clientsActiveTimeTotal = TimeSpan.FromTicks(clients.Sum(x => x.ActiveTime.Ticks));
-            sb.AppendLine($"AKTIV:");
+            var clientsActiveTimeFirst10 = clients.OrderByDescending(x => x.ActiveTime).Take(listLength).ToArray();
+            sb.AppendLine($"Active:");
             sb.AppendLine(string.Join(Environment.NewLine, clientsActiveTimeFirst10.Select(c => c.GetActiveTimeAndName()).ToArray()));
+
             sb.AppendLine("Fun facts:");
-            sb.AppendLine($"-> Insgesamt verschwendete Zeit: {clientsActiveTimeTotal.ToString(@"ddd\T\ hh\:mm\:ss")}");
+            var clientsActiveTimeTotal = TimeSpan.FromTicks(clients.Sum(x => x.ActiveTime.Ticks));
+            sb.AppendLine($"-> Total wasted time: {clientsActiveTimeTotal.ToString(@"ddd\T\ hh\:mm\:ss")}");
             sb.AppendLine(string.Format(
-                "-> Damit hätten wir {0} mal den 2. Weltkrieg führen können!",
+                "-> With this we could have led the 2nd World War {0} times!",
                 ((double)clientsActiveTimeTotal.Ticks / (double)WW2DURATION.Ticks).ToString("0.000")));
             sb.AppendLine(string.Format(
-                "-> Durchschnittlich verschwendete Zeit: {0}",
+                "-> Average wasted time: {0}",
                 TimeSpan.FromTicks(clientsActiveTimeTotal.Ticks / clients.Length).ToString(@"ddd\T\ hh\:mm\:ss")));
 
             sb.AppendLine(Environment.NewLine);
 
-            // Format for all users TODO: Make this optional?
-            var clientsCompleteTimeFirst10 = clients.OrderByDescending(x => x.TotalTime).Take(10).ToArray();
 
-            var clientsCompleteTimeTotal = TimeSpan.FromTicks(clients.Sum(x => x.TotalTime.Ticks));
-            sb.AppendLine($"VERBUNDEN:");
-            sb.AppendLine($"ZEIT - USERNAME - AKTIV RATIO");
+            // Format for all users
+            var clientsCompleteTimeFirst10 = clients.OrderByDescending(x => x.TotalTime).Take(listLength).ToArray();
+            sb.AppendLine($"Connected:");
+            sb.AppendLine($"TIME - USERNAME - ACTIVE RATIO");
             sb.AppendLine(string.Join(Environment.NewLine, clientsCompleteTimeFirst10.Select(c => c.GetTotalTimeAndName()).ToArray()));
+
             sb.AppendLine("Fun facts:");
-            sb.AppendLine($"-> Insgesamt verbundene Zeit: {clientsCompleteTimeTotal.ToString(@"ddd\T\ hh\:mm\:ss")}");
+            var clientsCompleteTimeTotal = TimeSpan.FromTicks(clients.Sum(x => x.TotalTime.Ticks));
+            sb.AppendLine($"-> Total time connected: {clientsCompleteTimeTotal.ToString(@"ddd\T\ hh\:mm\:ss")}");
             sb.AppendLine(string.Format(
-                "-> Damit hätten wir {0} mal den 2. Weltkrieg führen können!",
+                "-> With this we could have led the 2nd World War {0} times!",
                 ((double)clientsCompleteTimeTotal.Ticks / (double)WW2DURATION.Ticks).ToString("0.000")));
             sb.AppendLine(string.Format(
-                "-> Durchschnittlich verbundene Zeit: {0}",
+                "-> Average time connected: {0}",
                 TimeSpan.FromTicks(clientsCompleteTimeTotal.Ticks / clients.Length).ToString(@"ddd\T\ hh\:mm\:ss")));
             sb.Append(string.Format(
-                "-> Durchschnittlich aktiv Ratio: {0}",
+                "-> Average active ratio: {0}",
                 ((double)clientsActiveTimeTotal.Ticks / (double)clientsCompleteTimeTotal.Ticks).ToString("0.000")));
 
 
@@ -286,7 +295,6 @@ namespace TeamspeakActivityBot
             bool anyChange = false;
 
             // Get all full clients
-            Logger.Trace("Getting FullClients");
             var fullClients = await this.queryClient.GetFullClientsDetailedInfo();
 
             // Filter clients if they are connected in multiple client instances
@@ -362,6 +370,28 @@ namespace TeamspeakActivityBot
             }
 
             return update;
+        }
+
+        ~Bot()
+        {
+            Dispose(false);
+        }
+
+        /// <summary>Performs application-defined tasks associated with freeing, releasing, or resetting unmanaged resources.</summary>
+        public void Dispose()
+        {
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+
+        /// <summary>Performs application-defined tasks associated with freeing, releasing, or resetting unmanaged resources.</summary>
+        /// <param name="disposing">A value indicating whether the object is disposing or finalizing.</param>
+        protected virtual void Dispose(bool disposing)
+        {
+            if (disposing)
+            {
+                queryClient?.Dispose();
+            }
         }
     }
 }
