@@ -1,9 +1,6 @@
 ﻿using NLog;
-using NLog.Fluent;
 using System;
 using System.Linq;
-using System.Net;
-using System.Reflection.PortableExecutable;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
