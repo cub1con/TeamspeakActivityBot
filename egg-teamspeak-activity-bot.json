@@ -1,0 +1,192 @@
+{
+    "_comment": "DO NOT EDIT: FILE GENERATED AUTOMATICALLY BY PTERODACTYL PANEL - PTERODACTYL.IO",
+    "meta": {
+        "version": "PTDL_v2",
+        "update_url": null
+    },
+    "exported_at": "2022-09-13T03:06:35+02:00",
+    "name": "TeamspeakActivityBot",
+    "author": "Cubicon",
+    "description": "Egg for the TeamspeakActivityBot (https:\/\/github.com\/cub1con\/TeamspeakActivityBot)",
+    "features": null,
+    "docker_images": {
+        "ghcr.io\/parkervcp\/yolks:ubuntu": "ghcr.io\/parkervcp\/yolks:ubuntu"
+    },
+    "file_denylist": [],
+    "startup": ".\/TeamspeakActivityBot",
+    "config": {
+        "files": "{\r\n    \"config.json\": {\r\n        \"parser\": \"json\",\r\n        \"find\": {\r\n            \"Host\": \"{{env.SERVER_ADDRESS}}\",\r\n            \"HostPort\": \"{{env.QUERY_PORT}}\",\r\n            \"QueryUsername\": \"{{env.QUERY_USERNAME}}\",\r\n            \"QueryPassword\": \"{{env.QUERY_PASSWORD}}\",\r\n            \"QueryInstanceId\": \"{{env.QUERY_INSTANCEID}}\",\r\n            \"TopListChannelId\": \"{{env.BOT_CHANNEL_ID}}\",\r\n            \"TopListChannelNameFormat\": \"{{env.BOT_CHANNEL_NAME}}\",\r\n            \"TrackClientActiveTimes\": \"{{env.BOT_TRACK_ACTIVE}}\",\r\n            \"TrackClientConnectedTimes\": \"{{env.BOT_TRACK_TOTAL}}\",\r\n            \"TrackAFK\": \"{{env.BOT_TRACK_AFK}}\",\r\n            \"TrackOutputMuted\": \"{{env.BOT_TRACK_MUTED}}\",\r\n            \"TopListUpdateChannel\": \"{{env.BOT_CHANNEL_UPDATE}}\",\r\n            \"ChatCommandsEnabled\": \"{{env.BOT_CHAT_ENABLED}}\",\r\n            \"SentryDsn\": \"{{env.BOT_SENTRY_DSN}}\"\r\n        }\r\n    }\r\n}",
+        "startup": "{\r\n    \"done\": \"Starting bot...\"\r\n}",
+        "logs": "{}",
+        "stop": "^C"
+    },
+    "scripts": {
+        "installation": {
+            "script": "#!\/bin\/bash\r\n# Server Files: \/mnt\/server\r\nmkdir -p \/mnt\/server\r\ncd \/mnt\/server\r\n\r\n## Delete, create and enter source folder\r\nrm -rf source\r\nmkdir source\r\ncd source\r\n\r\n\r\nif !([ \"${BRANCH}\" == \"master\" ] || [ \"${BRANCH}\" == \"dev\" ]) ; then\r\n    BRANCH=\"master\"\r\n    echo -e \"Set branch to ${BRANCH}\"\r\nfi\r\n\r\n\r\necho -e \"Cloning ${BRANCH} branch\"\r\ngit clone --branch \"${BRANCH}\" https:\/\/github.com\/cub1con\/TeamspeakActivityBot.git\r\ngit clone https:\/\/github.com\/cub1con\/TeamSpeak3QueryApi.git\r\n\r\ncd ..\r\n\r\necho -e \"Building Bot\"\r\ndotnet publish source\/TeamspeakActivityBot\/TeamspeakActivityBot.sln -p:PublishProfile=LinuxSingleFileFolderProfile --configuration Release -o \/mnt\/server\r\n\r\necho -e \"Cleanup\"\r\nrm -rf source\r\n\r\nif [ ! -f config.json ] && [ -f config.json-dist ]\r\nthen\r\n\techo \"Copy default config\"\r\n\tcp config.json-dist config.json\r\nfi\r\n\r\necho -e \"Done!\"",
+            "container": "mcr.microsoft.com\/dotnet\/sdk:6.0",
+            "entrypoint": "bash"
+        }
+    },
+    "variables": [
+        {
+            "name": "Branch",
+            "description": "TeamspeakActivityBot Branch: master (stable), dev",
+            "env_variable": "BRANCH",
+            "default_value": "master",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": "required|string|max:20",
+            "field_type": "text"
+        },
+        {
+            "name": "TS server address",
+            "description": "Enter the IP or domain of the TS Server.\r\nSetting: Host",
+            "env_variable": "SERVER_ADDRESS",
+            "default_value": "",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": "required|string",
+            "field_type": "text"
+        },
+        {
+            "name": "TS server query port",
+            "description": "Enter the query port of the TS Server.\r\nSetting: HostPort",
+            "env_variable": "QUERY_PORT",
+            "default_value": "10011",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": "required|integer",
+            "field_type": "text"
+        },
+        {
+            "name": "TS server query username",
+            "description": "Enter the query username for your bot.\r\nSetting: QueryUsername",
+            "env_variable": "QUERY_USERNAME",
+            "default_value": "serveradmin",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": "required|string|max:40",
+            "field_type": "text"
+        },
+        {
+            "name": "TS server query password",
+            "description": "Enter the query password for your bot.\r\nSetting: QueryPassword",
+            "env_variable": "QUERY_PASSWORD",
+            "default_value": "",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": "required|string|max:40",
+            "field_type": "text"
+        },
+        {
+            "name": "TS server instance",
+            "description": "Enter the instance you wish to connect to.\r\nSetting: QueryInstanceId",
+            "env_variable": "QUERY_INSTANCEID",
+            "default_value": "0",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": "required|integer",
+            "field_type": "text"
+        },
+        {
+            "name": "Bot Name",
+            "description": "The visible name of the bot in TS, mostly seen on commands or chat.\r\nSetting: BotName",
+            "env_variable": "BOT_NAME",
+            "default_value": "TeamspeakActivityBot",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": "required|string|max:30",
+            "field_type": "text"
+        },
+        {
+            "name": "Bot Target Channel Id",
+            "description": "Enter the channel id of the channel you want to update.\r\nSetting: TopListChannelId",
+            "env_variable": "BOT_CHANNEL_ID",
+            "default_value": "",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": "required|integer",
+            "field_type": "text"
+        },
+        {
+            "name": "TS server channel name format",
+            "description": "Enter the channel name format.\r\nMust contain %NAME%, max channel name length is 40 characters.\r\nSetting: TopListChannelNameFormat",
+            "env_variable": "BOT_CHANNEL_NAME",
+            "default_value": "[cspacer9]|| MVP: %NAME% ||",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": "required|string|max:40",
+            "field_type": "text"
+        },
+        {
+            "name": "Bot Update Target Channel",
+            "description": "Enables if the target channel gets updated.\r\nUse only true or false.\r\nSetting: TopListUpdateChannel",
+            "env_variable": "BOT_CHANNEL_UPDATE",
+            "default_value": "true",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": "required|string|max:5",
+            "field_type": "text"
+        },
+        {
+            "name": "Bot Enable Chat Commands",
+            "description": "Enables or disable chat commands. Send !help in serverwide chat.\r\nUse only true or false.\r\nSetting: ChatCommandsEnabled",
+            "env_variable": "BOT_CHAT_ENABLED",
+            "default_value": "true",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": "required|string|max:5",
+            "field_type": "text"
+        },
+        {
+            "name": "Bot Track Client Active Times",
+            "description": "Tracks the active times of all users, except in ignored groups or channel and ignored states like muted.\r\nUse only true or false.\r\nSetting: TrackClientActiveTimes",
+            "env_variable": "BOT_TRACK_ACTIVE",
+            "default_value": "true",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": "required|string|max:5",
+            "field_type": "text"
+        },
+        {
+            "name": "Bot Track Connected Time",
+            "description": "Tracks the total connected time of all users, except in ignored channel or groups.\r\nUse only true or false.\r\nSetting: TrackClientConnectedTimes",
+            "env_variable": "BOT_TRACK_TOTAL",
+            "default_value": "true",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": "required|string|max:5",
+            "field_type": "text"
+        },
+        {
+            "name": "Bot Track AFK Users",
+            "description": "Enables users active to be tracked even if user is afk.\r\nUse only true or false.\r\nSetting: TrackAFK",
+            "env_variable": "BOT_TRACK_AFK",
+            "default_value": "false",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": "required|string|max:5",
+            "field_type": "text"
+        },
+        {
+            "name": "Bot Track Muted Users",
+            "description": "Enables users active time to be tracked even if in- or output is muted.\r\nUse only true or false.\r\nSetting: TrackOutputMuted",
+            "env_variable": "BOT_TRACK_MUTED",
+            "default_value": "false",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": "required|string|max:5",
+            "field_type": "text"
+        },
+        {
+            "name": "Bot Sentry Url",
+            "description": "Support to report errors into sentry",
+            "env_variable": "BOT_SENTRY_DSN",
+            "default_value": "",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": "string|nullable",
+            "field_type": "text"
+        }
+    ]
+}

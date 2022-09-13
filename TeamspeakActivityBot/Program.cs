@@ -36,7 +36,7 @@ namespace TeamspeakActivityBot
             ConfigManager.Load();
             // Check for valid config and options
             if (!ConfigManager.ValidateConfig())
-                Environment.Exit(1); // Exit the Application
+                Environment.Exit(0); // Exit the Application
 
             Logger.Info("Loading clients");
             UserManager.Load();

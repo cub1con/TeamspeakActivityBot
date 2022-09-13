@@ -1,0 +1,36 @@
+{
+  "Host": "localhost",
+  "HostPort": 10011,
+  "QueryUsername": "",
+  "QueryPassword": "",
+  "QueryInstanceId": 0,
+  "BotName": "TeamspeakActivityBot",
+  "TrackClientActiveTimes": true,
+  "TrackClientConnectedTimes": true,
+  "TrackTimeLogInterval": "00:00:05",
+  "TrackAFK": false,
+  "TrackOutputMuted": false,
+  "TrackMaxIdleTime": "00:00:30",
+  "TrackUserGroups": [
+    9,
+    10,
+    12
+  ],
+  "TrackIgnoreUserGroups": [
+    13
+  ],
+  "TrackIgnoreChannels": [
+    19,
+    18,
+    17,
+    16,
+    15,
+    14
+  ],
+  "TopListUpdateChannel": true,
+  "TopListChannelId": -1,
+  "TopListChannelNameFormat": "[cspacer9]|| MVP: %NAME% ||",
+  "TopListChannelUpdateInterval": "00:30:00",
+  "ChatCommandsEnabled": false,
+  "SentryDsn": ""
+}
