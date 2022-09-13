@@ -19,12 +19,14 @@ namespace TeamspeakActivityBot
 
             string environment = "prod";
 #if DEBUG
-            environment = "dev";
+            environment = "debug";
             Logger.Info("Running in debug mode");
 #endif
 
-            var assembly = Assembly.GetExecutingAssembly().GetName();
-            var release = $"{assembly.Name} - {environment}-{assembly.Version}";
+            var assembly = Assembly.GetExecutingAssembly();
+            var assemblyName = assembly.GetName();
+            var assemblyVersionString = assembly.GetCustomAttribute(typeof(AssemblyInformationalVersionAttribute)) as AssemblyInformationalVersionAttribute;
+            var release = $"{assemblyName.Name} - {environment} - v{assemblyVersionString.InformationalVersion}";
 
             // "Draw" TAB logo
             Console.WriteLine(Misc.Memes.Logo);

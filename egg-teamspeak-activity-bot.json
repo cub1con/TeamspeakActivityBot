@@ -4,7 +4,7 @@
         "version": "PTDL_v2",
         "update_url": null
     },
-    "exported_at": "2022-09-13T03:06:35+02:00",
+    "exported_at": "2022-09-13T19:36:25+02:00",
     "name": "TeamspeakActivityBot",
     "author": "Cubicon",
     "description": "Egg for the TeamspeakActivityBot (https:\/\/github.com\/cub1con\/TeamspeakActivityBot)",
@@ -22,7 +22,7 @@
     },
     "scripts": {
         "installation": {
-            "script": "#!\/bin\/bash\r\n# Server Files: \/mnt\/server\r\nmkdir -p \/mnt\/server\r\ncd \/mnt\/server\r\n\r\n## Delete, create and enter source folder\r\nrm -rf source\r\nmkdir source\r\ncd source\r\n\r\n\r\nif !([ \"${BRANCH}\" == \"master\" ] || [ \"${BRANCH}\" == \"dev\" ]) ; then\r\n    BRANCH=\"master\"\r\n    echo -e \"Set branch to ${BRANCH}\"\r\nfi\r\n\r\n\r\necho -e \"Cloning ${BRANCH} branch\"\r\ngit clone --branch \"${BRANCH}\" https:\/\/github.com\/cub1con\/TeamspeakActivityBot.git\r\ngit clone https:\/\/github.com\/cub1con\/TeamSpeak3QueryApi.git\r\n\r\ncd ..\r\n\r\necho -e \"Building Bot\"\r\ndotnet publish source\/TeamspeakActivityBot\/TeamspeakActivityBot.sln -p:PublishProfile=LinuxSingleFileFolderProfile --configuration Release -o \/mnt\/server\r\n\r\necho -e \"Cleanup\"\r\nrm -rf source\r\n\r\nif [ ! -f config.json ] && [ -f config.json-dist ]\r\nthen\r\n\techo \"Copy default config\"\r\n\tcp config.json-dist config.json\r\nfi\r\n\r\necho -e \"Done!\"",
+            "script": "#!\/bin\/bash\r\n# Server Files: \/mnt\/server\r\nmkdir -p \/mnt\/server\r\ncd \/mnt\/server\r\n\r\n## Delete, create and enter source folder\r\nrm -rf source\r\nmkdir source\r\ncd source\r\n\r\n\r\nif !([ \"${BRANCH}\" == \"master\" ] || [ \"${BRANCH}\" == \"dev\" ]) ; then\r\n    BRANCH=\"master\"\r\n    echo -e \"Set branch to ${BRANCH}\"\r\nfi\r\n\r\n\r\necho -e \"Cloning ${BRANCH} branch\"\r\ngit clone --branch \"${BRANCH}\" https:\/\/github.com\/cub1con\/TeamspeakActivityBot.git\r\ngit clone https:\/\/github.com\/cub1con\/TeamSpeak3QueryApi.git\r\n\r\ncd ..\r\n\r\n## Patch version to include branch\r\nsed -i 's|<\/Version>|\\-'\"${BRANCH}\"'<\/Version>|g' source\/TeamspeakActivityBot\/TeamspeakActivityBot\/TeamspeakActivityBot.csproj\r\n\r\necho -e \"Building Bot\"\r\ndotnet publish source\/TeamspeakActivityBot\/TeamspeakActivityBot.sln -p:PublishProfile=LinuxSingleFileFolderProfile --configuration Release -o \/mnt\/server\r\n\r\necho -e \"Cleanup\"\r\nrm -rf source\r\n\r\nif [ ! -f config.json ] && [ -f config.json-dist ]\r\nthen\r\n\techo \"Copy default config\"\r\n\tcp config.json-dist config.json\r\nfi\r\n\r\necho -e \"Done!\"",
             "container": "mcr.microsoft.com\/dotnet\/sdk:6.0",
             "entrypoint": "bash"
         }
