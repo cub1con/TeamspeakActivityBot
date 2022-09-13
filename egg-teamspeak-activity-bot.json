@@ -4,7 +4,7 @@
         "version": "PTDL_v2",
         "update_url": null
     },
-    "exported_at": "2022-09-13T19:36:25+02:00",
+    "exported_at": "2022-09-13T19:53:52+02:00",
     "name": "TeamspeakActivityBot",
     "author": "Cubicon",
     "description": "Egg for the TeamspeakActivityBot (https:\/\/github.com\/cub1con\/TeamspeakActivityBot)",
@@ -16,7 +16,7 @@
     "startup": ".\/TeamspeakActivityBot",
     "config": {
         "files": "{\r\n    \"config.json\": {\r\n        \"parser\": \"json\",\r\n        \"find\": {\r\n            \"Host\": \"{{env.SERVER_ADDRESS}}\",\r\n            \"HostPort\": \"{{env.QUERY_PORT}}\",\r\n            \"QueryUsername\": \"{{env.QUERY_USERNAME}}\",\r\n            \"QueryPassword\": \"{{env.QUERY_PASSWORD}}\",\r\n            \"QueryInstanceId\": \"{{env.QUERY_INSTANCEID}}\",\r\n            \"TopListChannelId\": \"{{env.BOT_CHANNEL_ID}}\",\r\n            \"TopListChannelNameFormat\": \"{{env.BOT_CHANNEL_NAME}}\",\r\n            \"TrackClientActiveTimes\": \"{{env.BOT_TRACK_ACTIVE}}\",\r\n            \"TrackClientConnectedTimes\": \"{{env.BOT_TRACK_TOTAL}}\",\r\n            \"TrackAFK\": \"{{env.BOT_TRACK_AFK}}\",\r\n            \"TrackOutputMuted\": \"{{env.BOT_TRACK_MUTED}}\",\r\n            \"TopListUpdateChannel\": \"{{env.BOT_CHANNEL_UPDATE}}\",\r\n            \"ChatCommandsEnabled\": \"{{env.BOT_CHAT_ENABLED}}\",\r\n            \"SentryDsn\": \"{{env.BOT_SENTRY_DSN}}\"\r\n        }\r\n    }\r\n}",
-        "startup": "{\r\n    \"done\": \"Starting bot...\"\r\n}",
+        "startup": "{\r\n    \"done\": \"Bot connected...\"\r\n}",
         "logs": "{}",
         "stop": "^C"
     },
