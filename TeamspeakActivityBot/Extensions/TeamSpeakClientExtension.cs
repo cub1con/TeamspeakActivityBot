@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using TeamSpeak3QueryApi.Net.Specialized;
@@ -30,7 +31,14 @@ namespace TeamspeakActivityBot.Extensions
             var returnList = new List<GetClientDetailedInfo>();
             foreach (var clientInfo in await client.GetFullClients())
             {
-                returnList.Add(await client.GetClientInfo(clientInfo.Id));
+                try
+                {
+                    returnList.Add(await client.GetClientInfo(clientInfo.Id));
+                }
+                catch (Exception ex)
+                {
+                    NLog.LogManager.GetCurrentClassLogger().Trace(ex, "User disconnected before getting client info");
+                }
             }
 
             return returnList;
