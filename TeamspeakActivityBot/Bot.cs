@@ -80,19 +80,26 @@ namespace TeamspeakActivityBot
 
                     var lastUserStatsUpdate = DateTime.Now;
                     var lastChannelUpdate = DateTime.MinValue;
+                    var lastLogUpdate = DateTime.Now;
 
                     // https://docs.microsoft.com/en-us/dotnet/api/system.threading.periodictimer?view=net-6.0
                     // https://stackoverflow.com/questions/30462079/run-async-method-regularly-with-specified-interval#:~:text=FromMinutes(5))%3B-,.NET%206%20update,-%3A%20It%20is
                     var periodicTimer = new PeriodicTimer(TimeSpan.FromSeconds(1));
                     while (await periodicTimer.WaitForNextTickAsync())
                     {
-                        var runningTime = DateTime.Now;
-
                         if (Console.KeyAvailable)
                         {
                             periodicTimer.Dispose();
                             return;
                         }
+
+                        if (lastLogUpdate < DateTime.Now - TimeSpan.FromMinutes(10))
+                        {
+                            Logger.Info("I'm still running!");
+                            lastLogUpdate = DateTime.Now;
+                        }
+
+                        var runningTime = DateTime.Now;
 
                         // Collect ClientTimes after timespan if option is enabled
                         if (runningTime - lastUserStatsUpdate >= ConfigManager.Config.TrackTimeLogInterval && ConfigManager.Config.TrackClientTimes)
@@ -287,7 +294,7 @@ namespace TeamspeakActivityBot
 
         private async Task CollectClientTimes(DateTime lastRun)
         {
-            Logger.Info("Collecting online time");
+            Logger.Trace("Collecting online time");
 
             bool anyChange = false;
 
